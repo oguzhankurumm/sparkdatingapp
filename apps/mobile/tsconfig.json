@@ -1,0 +1,9 @@
+{
+  "extends": "@spark/tsconfig/base.json",
+  "compilerOptions": {
+    "jsx": "react-native",
+    "lib": ["ES2022"]
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules"]
+}

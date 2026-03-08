@@ -1,0 +1,16 @@
+{
+  "name": "@spark/mobile",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@spark/types": "workspace:*",
+    "@spark/validators": "workspace:*"
+  },
+  "devDependencies": {
+    "@spark/tsconfig": "workspace:*",
+    "typescript": "^5.7.3"
+  }
+}

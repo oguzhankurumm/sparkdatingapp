@@ -1,0 +1,271 @@
+{
+  "common": {
+    "appName": "Spark",
+    "tagline": "Flört Yeniden Tanımlandı",
+    "loading": "Yükleniyor...",
+    "error": "Bir şeyler yanlış gitti",
+    "retry": "Tekrar dene",
+    "save": "Kaydet",
+    "cancel": "İptal",
+    "confirm": "Onayla",
+    "delete": "Sil",
+    "edit": "Düzenle",
+    "back": "Geri",
+    "next": "İleri",
+    "continue": "Devam",
+    "done": "Tamam",
+    "skip": "Atla",
+    "search": "Ara",
+    "noResults": "Sonuç bulunamadı",
+    "seeAll": "Tümünü Gör",
+    "close": "Kapat",
+    "submit": "Gönder",
+    "apply": "Uygula",
+    "reset": "Sıfırla",
+    "or": "veya",
+    "and": "ve",
+    "yes": "Evet",
+    "no": "Hayır",
+    "ok": "Tamam"
+  },
+  "auth": {
+    "signIn": "Giriş Yap",
+    "signUp": "Hesap Oluştur",
+    "signOut": "Çıkış Yap",
+    "email": "E-posta",
+    "password": "Şifre",
+    "forgotPassword": "Şifreni mi unuttun?",
+    "resetPassword": "Şifre Sıfırla",
+    "orContinueWith": "Veya şununla devam et",
+    "google": "Google ile devam et",
+    "apple": "Apple ile devam et",
+    "phone": "Telefon Numarası",
+    "verifyCode": "Doğrulama kodunu gir",
+    "codeSent": "Kod {phone} numarasına gönderildi",
+    "resendCode": "Kodu tekrar gönder",
+    "resendIn": "{seconds} sn sonra tekrar gönder",
+    "alreadyHaveAccount": "Zaten hesabın var mı?",
+    "dontHaveAccount": "Hesabın yok mu?",
+    "agreeToTerms": "Devam ederek {terms} ve {privacy} kabul etmiş olursun"
+  },
+  "onboarding": {
+    "step": "Adım {current} / {total}",
+    "basicInfo": {
+      "title": "Hakkında",
+      "firstName": "Adın",
+      "birthday": "Doğum Tarihi",
+      "gender": "Cinsiyet",
+      "male": "Erkek",
+      "female": "Kadın",
+      "nonBinary": "Non-binary",
+      "showGender": "Cinsiyetimi profilimde göster"
+    },
+    "photos": {
+      "title": "Fotoğraflarını Ekle",
+      "subtitle": "Devam etmek için en az 2 fotoğraf ekle",
+      "addPhoto": "Fotoğraf Ekle",
+      "photoCount": "{count} / {max} fotoğraf"
+    },
+    "bio": {
+      "title": "Biyografin",
+      "placeholder": "Kendinden bahset...",
+      "prompts": "Soruları Yanıtla",
+      "selectPrompt": "Bir soru seç",
+      "charCount": "{count}/{max}"
+    },
+    "location": {
+      "title": "Konumun",
+      "subtitle": "Yakınındaki kişileri bulmak için konumunu kullanıyoruz",
+      "enable": "Konumu Etkinleştir",
+      "manualEntry": "Şehri manuel gir",
+      "cityPlaceholder": "Şehir, Ülke"
+    },
+    "interests": {
+      "title": "İlgi Alanların",
+      "subtitle": "En az 3 ilgi alanı seç",
+      "selected": "{count} seçildi"
+    },
+    "goals": {
+      "title": "Ne arıyorsun?",
+      "longTerm": "Uzun süreli ilişki",
+      "shortTerm": "Kısa süreli bir şeyler",
+      "friends": "Yeni arkadaşlar",
+      "unsure": "Henüz karar veremedim"
+    },
+    "preferences": {
+      "title": "Keşif Tercihleri",
+      "showMe": "Bana göster",
+      "men": "Erkekler",
+      "women": "Kadınlar",
+      "everyone": "Herkes",
+      "ageRange": "Yaş Aralığı",
+      "distance": "Maksimum Mesafe",
+      "distanceUnit": "{value} km"
+    },
+    "notifications": {
+      "title": "Gelişmelerden Haberdar Ol",
+      "subtitle": "Yeni eşleşmeler ve mesajlar hakkında bildirim al",
+      "enable": "Bildirimleri Etkinleştir",
+      "notNow": "Şimdi değil"
+    },
+    "verify": {
+      "title": "Profilini Doğrula",
+      "subtitle": "Selfie çekerek doğrulanmış rozeti kazan",
+      "takePhoto": "Selfie Çek",
+      "skipForNow": "Şimdilik atla"
+    }
+  },
+  "discover": {
+    "title": "Keşfet",
+    "swipe": "Kaydır",
+    "browse": "Gözat",
+    "like": "Beğen",
+    "pass": "Geç",
+    "superLike": "Süper Beğen",
+    "boost": "Öne Çıkar",
+    "rewind": "Geri Al",
+    "noMoreProfiles": "Yakınında başka profil kalmadı",
+    "expandSearch": "Daha fazla kişi bulmak için aramanı genişlet",
+    "liveNow": "Şu An Canlı",
+    "readyToChat": "Sohbete Hazır",
+    "vipTables": "VIP Masalar",
+    "trending": "Trend Profiller",
+    "nearby": "Yakınındakiler"
+  },
+  "matches": {
+    "title": "Eşleşmeler",
+    "noMatches": "Henüz eşleşme yok",
+    "startSwiping": "Eşini bulmak için kaydırmaya başla!",
+    "itsAMatch": "Eşleştiniz!",
+    "compatibility": "%{percent} uyumluluk",
+    "likedEachOther": "Sen ve {name} birbirinizi beğendiniz",
+    "sendMessage": "Mesaj Gönder",
+    "keepSwiping": "Kaydırmaya Devam Et",
+    "expiresIn": "{hours} saat içinde sona erer",
+    "expired": "Eşleşme sona erdi",
+    "rematch": "Yeniden Eşleş",
+    "rematchCost": "{tokens} token",
+    "likedYou": "Seni Beğendi",
+    "likeSent": "Beğeni Gönderildi",
+    "mutual": "Karşılıklı"
+  },
+  "chat": {
+    "title": "Sohbet",
+    "typeMessage": "Mesaj yaz...",
+    "send": "Gönder",
+    "sendGift": "Hediye Gönder",
+    "datingHelper": "Flört Asistanı",
+    "translated": "Çevrildi",
+    "online": "Çevrimiçi",
+    "lastSeen": "Son görülme {time}",
+    "typing": "yazıyor..."
+  },
+  "tables": {
+    "title": "Masalar",
+    "create": "Masa Oluştur",
+    "join": "Katıl",
+    "full": "Dolu",
+    "vip": "VIP",
+    "active": "Aktif",
+    "myTables": "Masalarım",
+    "noTables": "Aktif masa yok",
+    "seats": "{count} koltuk müsait"
+  },
+  "calls": {
+    "title": "Aramalar",
+    "videoCall": "Görüntülü Arama",
+    "startCall": "Aramayı Başlat",
+    "endCall": "Aramayı Bitir",
+    "billingWarning": "Her dakika {tokens} token kesilir. İade yapılmaz.",
+    "duration": "{minutes} dk",
+    "noRefund": "Görüntülü aramalar için iade yapılmaz"
+  },
+  "profile": {
+    "title": "Profil",
+    "edit": "Profili Düzenle",
+    "settings": "Ayarlar",
+    "verified": "Doğrulanmış",
+    "boost": "Profili Öne Çıkar",
+    "wallet": "Cüzdan",
+    "subscription": "Abonelik",
+    "language": "Dil",
+    "theme": "Tema",
+    "darkMode": "Karanlık Mod",
+    "notifications": "Bildirimler",
+    "privacy": "Gizlilik",
+    "blockedUsers": "Engellenen Kullanıcılar",
+    "deleteAccount": "Hesabı Sil",
+    "logOut": "Çıkış Yap",
+    "about": "Hakkında",
+    "interests": "İlgi Alanları",
+    "photos": "Fotoğraflar",
+    "prompts": "Sorular"
+  },
+  "wallet": {
+    "title": "Cüzdan",
+    "balance": "Token Bakiyesi",
+    "purchased": "Satın Alınan",
+    "earned": "Kazanılan",
+    "topUp": "Yükle",
+    "history": "İşlem Geçmişi",
+    "withdraw": "Çek",
+    "minWithdraw": "Minimum çekim: {amount} token",
+    "kycRequired": "{amount} token üzeri çekimlerde KYC doğrulaması gerekir"
+  },
+  "subscription": {
+    "title": "Abonelik Planları",
+    "currentPlan": "Mevcut Plan",
+    "upgrade": "Yükselt",
+    "monthly": "Aylık",
+    "yearly": "Yıllık",
+    "perMonth": "/ay",
+    "savePercent": "%{percent} tasarruf",
+    "free": "Ücretsiz",
+    "premium": "Premium",
+    "platinum": "Platinum",
+    "mostPopular": "En Popüler",
+    "featureGated": "Bu özellik {plan} gerektirir",
+    "unlockWith": "{plan} ile aç"
+  },
+  "gifts": {
+    "title": "Hediyeler",
+    "send": "Hediye Gönder",
+    "received": "bir hediye aldı",
+    "sentYou": "{name} sana {gift} gönderdi",
+    "cost": "{tokens} token"
+  },
+  "boost": {
+    "title": "Öne Çıkar",
+    "mini": "Mini Boost",
+    "pro": "Pro Boost",
+    "max": "Max Boost",
+    "active": "Boost Aktif",
+    "remaining": "{time} kaldı",
+    "multiplier": "{x}x daha fazla görünürlük"
+  },
+  "ai": {
+    "datingHelper": "Flört Asistanı",
+    "compatibility": "AI Uyumluluk",
+    "insight": "AI Analiz",
+    "greeting": {
+      "morning": "Günaydın",
+      "afternoon": "İyi Günler",
+      "evening": "İyi Akşamlar"
+    }
+  },
+  "errors": {
+    "networkError": "Bağlantı hatası. Lütfen internetini kontrol et.",
+    "sessionExpired": "Oturum sona erdi. Lütfen tekrar giriş yap.",
+    "insufficientTokens": "Yeterli token yok",
+    "matchExpired": "Bu eşleşmenin süresi doldu",
+    "uploadFailed": "Yükleme başarısız. Lütfen tekrar dene."
+  },
+  "time": {
+    "justNow": "Az önce",
+    "minutesAgo": "{count} dk önce",
+    "hoursAgo": "{count} sa önce",
+    "daysAgo": "{count} gün önce",
+    "today": "Bugün",
+    "yesterday": "Dün"
+  }
+}

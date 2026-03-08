@@ -1,0 +1,271 @@
+{
+  "common": {
+    "appName": "Spark",
+    "tagline": "Dating Reimagined",
+    "loading": "Loading...",
+    "error": "Something went wrong",
+    "retry": "Try again",
+    "save": "Save",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "delete": "Delete",
+    "edit": "Edit",
+    "back": "Back",
+    "next": "Next",
+    "continue": "Continue",
+    "done": "Done",
+    "skip": "Skip",
+    "search": "Search",
+    "noResults": "No results found",
+    "seeAll": "See All",
+    "close": "Close",
+    "submit": "Submit",
+    "apply": "Apply",
+    "reset": "Reset",
+    "or": "or",
+    "and": "and",
+    "yes": "Yes",
+    "no": "No",
+    "ok": "OK"
+  },
+  "auth": {
+    "signIn": "Sign In",
+    "signUp": "Create Account",
+    "signOut": "Sign Out",
+    "email": "Email",
+    "password": "Password",
+    "forgotPassword": "Forgot password?",
+    "resetPassword": "Reset Password",
+    "orContinueWith": "Or continue with",
+    "google": "Continue with Google",
+    "apple": "Continue with Apple",
+    "phone": "Phone Number",
+    "verifyCode": "Enter verification code",
+    "codeSent": "Code sent to {phone}",
+    "resendCode": "Resend code",
+    "resendIn": "Resend in {seconds}s",
+    "alreadyHaveAccount": "Already have an account?",
+    "dontHaveAccount": "Don't have an account?",
+    "agreeToTerms": "By continuing, you agree to our {terms} and {privacy}"
+  },
+  "onboarding": {
+    "step": "Step {current} of {total}",
+    "basicInfo": {
+      "title": "About You",
+      "firstName": "First Name",
+      "birthday": "Birthday",
+      "gender": "Gender",
+      "male": "Male",
+      "female": "Female",
+      "nonBinary": "Non-binary",
+      "showGender": "Show my gender on my profile"
+    },
+    "photos": {
+      "title": "Add Your Photos",
+      "subtitle": "Add at least 2 photos to continue",
+      "addPhoto": "Add Photo",
+      "photoCount": "{count} of {max} photos"
+    },
+    "bio": {
+      "title": "Your Bio",
+      "placeholder": "Write something about yourself...",
+      "prompts": "Answer Prompts",
+      "selectPrompt": "Choose a prompt",
+      "charCount": "{count}/{max}"
+    },
+    "location": {
+      "title": "Your Location",
+      "subtitle": "We use your location to find people near you",
+      "enable": "Enable Location",
+      "manualEntry": "Enter city manually",
+      "cityPlaceholder": "City, Country"
+    },
+    "interests": {
+      "title": "Your Interests",
+      "subtitle": "Select at least 3 interests",
+      "selected": "{count} selected"
+    },
+    "goals": {
+      "title": "What are you looking for?",
+      "longTerm": "Long-term relationship",
+      "shortTerm": "Something casual",
+      "friends": "New friends",
+      "unsure": "Still figuring it out"
+    },
+    "preferences": {
+      "title": "Discovery Preferences",
+      "showMe": "Show me",
+      "men": "Men",
+      "women": "Women",
+      "everyone": "Everyone",
+      "ageRange": "Age Range",
+      "distance": "Maximum Distance",
+      "distanceUnit": "{value} km"
+    },
+    "notifications": {
+      "title": "Stay in the Loop",
+      "subtitle": "Get notified about new matches and messages",
+      "enable": "Enable Notifications",
+      "notNow": "Not now"
+    },
+    "verify": {
+      "title": "Verify Your Profile",
+      "subtitle": "Get a verified badge by taking a selfie",
+      "takePhoto": "Take a Selfie",
+      "skipForNow": "Skip for now"
+    }
+  },
+  "discover": {
+    "title": "Discover",
+    "swipe": "Swipe",
+    "browse": "Browse",
+    "like": "Like",
+    "pass": "Pass",
+    "superLike": "Super Like",
+    "boost": "Boost",
+    "rewind": "Rewind",
+    "noMoreProfiles": "No more profiles nearby",
+    "expandSearch": "Expand your search to find more people",
+    "liveNow": "Live Now",
+    "readyToChat": "Ready to Chat",
+    "vipTables": "VIP Tables",
+    "trending": "Trending Profiles",
+    "nearby": "Nearby"
+  },
+  "matches": {
+    "title": "Matches",
+    "noMatches": "No matches yet",
+    "startSwiping": "Start swiping to find your match!",
+    "itsAMatch": "It's a Match!",
+    "compatibility": "{percent}% compatibility",
+    "likedEachOther": "You and {name} liked each other",
+    "sendMessage": "Send a Message",
+    "keepSwiping": "Keep Swiping",
+    "expiresIn": "Expires in {hours}h",
+    "expired": "Match expired",
+    "rematch": "Rematch",
+    "rematchCost": "{tokens} tokens",
+    "likedYou": "Liked You",
+    "likeSent": "Like Sent",
+    "mutual": "Mutual"
+  },
+  "chat": {
+    "title": "Chat",
+    "typeMessage": "Type a message...",
+    "send": "Send",
+    "sendGift": "Send Gift",
+    "datingHelper": "Dating Helper",
+    "translated": "Translated",
+    "online": "Online",
+    "lastSeen": "Last seen {time}",
+    "typing": "typing..."
+  },
+  "tables": {
+    "title": "Tables",
+    "create": "Create Table",
+    "join": "Join",
+    "full": "Full",
+    "vip": "VIP",
+    "active": "Active",
+    "myTables": "My Tables",
+    "noTables": "No active tables",
+    "seats": "{count} seats available"
+  },
+  "calls": {
+    "title": "Calls",
+    "videoCall": "Video Call",
+    "startCall": "Start Call",
+    "endCall": "End Call",
+    "billingWarning": "Each minute costs {tokens} tokens. No refunds.",
+    "duration": "{minutes} min",
+    "noRefund": "No refunds for video calls"
+  },
+  "profile": {
+    "title": "Profile",
+    "edit": "Edit Profile",
+    "settings": "Settings",
+    "verified": "Verified",
+    "boost": "Boost Profile",
+    "wallet": "Wallet",
+    "subscription": "Subscription",
+    "language": "Language",
+    "theme": "Theme",
+    "darkMode": "Dark Mode",
+    "notifications": "Notifications",
+    "privacy": "Privacy",
+    "blockedUsers": "Blocked Users",
+    "deleteAccount": "Delete Account",
+    "logOut": "Log Out",
+    "about": "About",
+    "interests": "Interests",
+    "photos": "Photos",
+    "prompts": "Prompts"
+  },
+  "wallet": {
+    "title": "Wallet",
+    "balance": "Token Balance",
+    "purchased": "Purchased",
+    "earned": "Earned",
+    "topUp": "Top Up",
+    "history": "Transaction History",
+    "withdraw": "Withdraw",
+    "minWithdraw": "Minimum withdrawal: {amount} tokens",
+    "kycRequired": "KYC verification required for withdrawals over {amount} tokens"
+  },
+  "subscription": {
+    "title": "Subscription Plans",
+    "currentPlan": "Current Plan",
+    "upgrade": "Upgrade",
+    "monthly": "Monthly",
+    "yearly": "Yearly",
+    "perMonth": "/month",
+    "savePercent": "Save {percent}%",
+    "free": "Free",
+    "premium": "Premium",
+    "platinum": "Platinum",
+    "mostPopular": "Most Popular",
+    "featureGated": "This feature requires {plan}",
+    "unlockWith": "Unlock with {plan}"
+  },
+  "gifts": {
+    "title": "Gifts",
+    "send": "Send Gift",
+    "received": "received a gift",
+    "sentYou": "{name} sent you {gift}",
+    "cost": "{tokens} tokens"
+  },
+  "boost": {
+    "title": "Boost",
+    "mini": "Mini Boost",
+    "pro": "Pro Boost",
+    "max": "Max Boost",
+    "active": "Boost Active",
+    "remaining": "{time} remaining",
+    "multiplier": "{x}x more visibility"
+  },
+  "ai": {
+    "datingHelper": "Dating Helper",
+    "compatibility": "AI Compatibility",
+    "insight": "AI Insight",
+    "greeting": {
+      "morning": "Good Morning",
+      "afternoon": "Good Afternoon",
+      "evening": "Good Evening"
+    }
+  },
+  "errors": {
+    "networkError": "Network error. Please check your connection.",
+    "sessionExpired": "Session expired. Please sign in again.",
+    "insufficientTokens": "Not enough tokens",
+    "matchExpired": "This match has expired",
+    "uploadFailed": "Upload failed. Please try again."
+  },
+  "time": {
+    "justNow": "Just now",
+    "minutesAgo": "{count}m ago",
+    "hoursAgo": "{count}h ago",
+    "daysAgo": "{count}d ago",
+    "today": "Today",
+    "yesterday": "Yesterday"
+  }
+}
