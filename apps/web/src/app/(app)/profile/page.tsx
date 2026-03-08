@@ -1,410 +1,399 @@
 'use client'
 
-import { useCallback, useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { Avatar, Badge, Button, Input } from '@spark/ui'
-import { ThemeToggleConnected } from '@/components/theme-toggle-connected'
-import { useCurrentUser, useLogout } from '@/lib/hooks/use-auth'
-import { api } from '@/lib/api-client'
+import { Avatar, Badge, Button, PillTag, ThemeToggle, Skeleton } from '@spark/ui'
 import {
-  User as UserIcon,
-  Shield,
-  Download,
-  Trash,
-  FileText,
+  PencilSimple,
   Gear,
+  Star,
+  Heart,
+  ChatCircle,
+  Gift,
+  Coin,
+  Crown,
+  CheckCircle,
   Globe,
-  Bell,
-  SignOut,
-  Warning,
-  CaretRight,
-  X,
+  ArrowRight,
 } from '@phosphor-icons/react'
+import { useCurrentUser } from '@/lib/hooks/use-auth'
+import { api } from '@/lib/api-client'
+import { useQuery } from '@tanstack/react-query'
+
+// ──────────────────────────────────────────────
+// Types
+// ──────────────────────────────────────────────
+
+interface UserProfile {
+  id: string
+  firstName: string
+  age: number
+  gender: 'male' | 'female' | 'non_binary'
+  avatarUrl: string | null
+  photos: { id: string; url: string; isPrimary: boolean }[]
+  isVerified: boolean
+  plan: 'free' | 'premium' | 'platinum'
+  bio: string | null
+  zodiacSign: string | null
+  prompts: { question: string; answer: string }[]
+  interests: string[]
+  stats: { matches: number; tableJoins: number; giftsReceived: number }
+  topGifts: { emoji: string; name: string; count: number }[]
+  tokenBalance: number
+}
+
+const ZODIAC_EMOJIS: Record<string, string> = {
+  Aries: '♈',
+  Taurus: '♉',
+  Gemini: '♊',
+  Cancer: '♋',
+  Leo: '♌',
+  Virgo: '♍',
+  Libra: '♎',
+  Scorpio: '♏',
+  Sagittarius: '♐',
+  Capricorn: '♑',
+  Aquarius: '♒',
+  Pisces: '♓',
+}
+
+// ──────────────────────────────────────────────
+// Hooks
+// ──────────────────────────────────────────────
+
+function useUserProfile() {
+  return useQuery({
+    queryKey: ['profile', 'me'],
+    queryFn: () => api.get<UserProfile>('/users/me/profile'),
+    staleTime: 2 * 60 * 1000,
+  })
+}
 
 // ──────────────────────────────────────────────
 // Profile Page
 // ──────────────────────────────────────────────
 
 export default function ProfilePage() {
-  const { data: user, isLoading, error } = useCurrentUser()
-  const logoutMutation = useLogout()
+  const { data: authUser } = useCurrentUser()
+  const { data: profile, isLoading } = useUserProfile()
   const router = useRouter()
-  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
 
-  const handleLogout = useCallback(async () => {
-    await logoutMutation.mutateAsync()
-    router.push('/')
-  }, [logoutMutation, router])
+  if (isLoading) return <ProfileSkeleton />
 
-  if (isLoading) {
-    return <ProfileSkeleton />
-  }
-
-  if (error || !user) {
-    return (
-      <div className="flex min-h-[60vh] items-center justify-center p-8">
-        <div className="text-center">
-          <p className="text-text-secondary">Unable to load your profile.</p>
-          <Button
-            variant="secondary"
-            size="sm"
-            className="mt-4"
-            onClick={() => router.push('/login')}
-          >
-            Sign In
-          </Button>
-        </div>
-      </div>
-    )
-  }
+  // Fallback for API not yet wired up — render with auth user data
+  const displayName = profile?.firstName ?? authUser?.firstName ?? ''
+  const avatarUrl = profile?.avatarUrl ?? authUser?.avatarUrl ?? null
+  const plan = profile?.plan ?? authUser?.plan ?? 'free'
+  const isVerified = profile?.isVerified ?? authUser?.isVerified ?? false
+  const zodiac = profile?.zodiacSign ?? null
+  const photos = profile?.photos ?? []
+  const prompts = profile?.prompts ?? []
+  const interests = profile?.interests ?? []
+  const stats = profile?.stats ?? { matches: 0, tableJoins: 0, giftsReceived: 0 }
+  const topGifts = profile?.topGifts ?? []
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-6 sm:py-8">
-      <h1 className="text-text-primary mb-6 text-2xl font-bold">Profile & Settings</h1>
-
-      {/* ─── Profile Section ─── */}
-      <SectionCard>
-        <div className="flex items-center gap-4">
-          <Avatar src={user.avatarUrl} fallback={user.firstName.charAt(0)} size="lg" />
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2">
-              <p className="text-text-primary truncate text-lg font-semibold">{user.firstName}</p>
-              {user.isVerified && (
-                <Badge variant="verified" size="sm">
-                  Verified
-                </Badge>
-              )}
-            </div>
-            <p className="text-text-secondary truncate text-sm">{user.email}</p>
-          </div>
+    <div className="mx-auto max-w-2xl pb-24">
+      {/* ─── Top bar ─── */}
+      <div className="flex items-center justify-between px-4 pb-2 pt-4">
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          <button
+            onClick={() => router.push('/profile/settings')}
+            className="text-text-muted hover:text-text-primary flex h-9 w-9 items-center justify-center rounded-full transition-colors"
+            aria-label="Language"
+          >
+            <Globe className="h-5 w-5" />
+          </button>
         </div>
-        <Button variant="secondary" size="sm" className="mt-4 w-full sm:mt-0 sm:w-auto">
-          <UserIcon className="h-4 w-4" />
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => router.push('/profile/settings')}
+            className="text-text-muted hover:text-text-primary flex h-9 w-9 items-center justify-center rounded-full transition-colors"
+            aria-label="Settings"
+          >
+            <Gear className="h-5 w-5" />
+          </button>
+        </div>
+      </div>
+
+      {/* ─── Hero: Avatar + name + badges ─── */}
+      <div className="flex flex-col items-center px-4 py-4 text-center">
+        <div className="relative mb-3">
+          <Avatar
+            src={avatarUrl}
+            fallback={displayName.charAt(0)}
+            size="2xl"
+            className="ring-4 ring-white dark:ring-black/20"
+          />
+          {plan === 'platinum' && (
+            <div className="absolute -right-1 -top-1 flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-amber-400 to-amber-600 shadow-md">
+              <Crown className="h-3.5 w-3.5 text-white" weight="fill" />
+            </div>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2">
+          <h1 className="text-text-primary text-2xl font-bold">{displayName}</h1>
+          {isVerified && <CheckCircle className="text-primary h-5 w-5" weight="fill" />}
+        </div>
+
+        {/* Plan badge */}
+        {plan !== 'free' && (
+          <Badge
+            variant="plan"
+            plan={plan === 'platinum' ? 'platinum' : 'premium'}
+            size="sm"
+            className="mt-1"
+          >
+            {plan === 'platinum' ? '👑 Platinum' : '⚡ Premium'}
+          </Badge>
+        )}
+
+        {/* Zodiac */}
+        {zodiac && (
+          <button className="text-text-secondary mt-2 flex items-center gap-1.5 text-sm">
+            <span>{ZODIAC_EMOJIS[zodiac] ?? '✨'}</span>
+            <span>{zodiac}</span>
+          </button>
+        )}
+
+        {/* Edit profile button */}
+        <Button
+          variant="secondary"
+          size="sm"
+          className="mt-4"
+          onClick={() => router.push('/profile/edit')}
+        >
+          <PencilSimple className="h-4 w-4" />
           Edit Profile
         </Button>
-      </SectionCard>
-
-      {/* ─── Privacy & Data Section ─── */}
-      <SectionHeader icon={Shield} title="Privacy & Data" />
-      <SectionCard>
-        <div className="space-y-4">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-text-primary text-sm font-medium">Download My Data</p>
-              <p className="text-text-muted text-xs">
-                Get a copy of all your personal data in JSON format
-              </p>
-            </div>
-            <DownloadDataButton />
-          </div>
-
-          <div className="border-border-subtle border-t" />
-
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-text-primary text-sm font-medium">Delete Account</p>
-              <p className="text-text-muted text-xs">
-                Permanently remove your account and all data
-              </p>
-            </div>
-            <Button variant="danger" size="sm" onClick={() => setDeleteModalOpen(true)}>
-              <Trash className="h-4 w-4" />
-              Delete Account
-            </Button>
-          </div>
-        </div>
-      </SectionCard>
-
-      {/* ─── Legal Links Section ─── */}
-      <SectionHeader icon={FileText} title="Legal" />
-      <SectionCard>
-        <div className="space-y-1">
-          <LegalLink href="/privacy" label="Privacy Policy" />
-          <LegalLink href="/terms" label="Terms of Service" />
-          <LegalLink href="/kvkk" label="KVKK Aydinlatma Metni" />
-        </div>
-      </SectionCard>
-
-      {/* ─── App Settings Section ─── */}
-      <SectionHeader icon={Gear} title="App Settings" />
-      <SectionCard>
-        <div className="space-y-4">
-          {/* Theme */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="bg-surface text-text-secondary flex h-8 w-8 items-center justify-center rounded-lg">
-                <Gear className="h-4 w-4" />
-              </div>
-              <p className="text-text-primary text-sm font-medium">Theme</p>
-            </div>
-            <ThemeToggleConnected />
-          </div>
-
-          <div className="border-border-subtle border-t" />
-
-          {/* Language */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="bg-surface text-text-secondary flex h-8 w-8 items-center justify-center rounded-lg">
-                <Globe className="h-4 w-4" />
-              </div>
-              <div>
-                <p className="text-text-primary text-sm font-medium">Language</p>
-                <p className="text-text-muted text-xs">English</p>
-              </div>
-            </div>
-            <CaretRight className="text-text-muted h-4 w-4" />
-          </div>
-
-          <div className="border-border-subtle border-t" />
-
-          {/* Notifications */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="bg-surface text-text-secondary flex h-8 w-8 items-center justify-center rounded-lg">
-                <Bell className="h-4 w-4" />
-              </div>
-              <div>
-                <p className="text-text-primary text-sm font-medium">Notifications</p>
-                <p className="text-text-muted text-xs">Push, email, in-app</p>
-              </div>
-            </div>
-            <CaretRight className="text-text-muted h-4 w-4" />
-          </div>
-        </div>
-      </SectionCard>
-
-      {/* ─── Log Out ─── */}
-      <div className="mt-6">
-        <Button
-          variant="ghost"
-          size="lg"
-          className="text-danger w-full justify-center"
-          onClick={handleLogout}
-          loading={logoutMutation.isPending}
-        >
-          <SignOut className="h-5 w-5" />
-          Log Out
-        </Button>
       </div>
 
-      {/* ─── Delete Account Modal ─── */}
-      {deleteModalOpen && <DeleteAccountModal onClose={() => setDeleteModalOpen(false)} />}
-    </div>
-  )
-}
+      {/* ─── Stats ─── */}
+      <div className="mx-4 mb-4 grid grid-cols-3 gap-3">
+        <StatCard
+          icon={<Heart className="h-5 w-5" weight="fill" />}
+          value={stats.matches}
+          label="Matches"
+          color="text-like"
+        />
+        <StatCard
+          icon={<ChatCircle className="h-5 w-5" weight="fill" />}
+          value={stats.tableJoins}
+          label="Tables"
+          color="text-primary"
+        />
+        <StatCard
+          icon={<Gift className="h-5 w-5" weight="fill" />}
+          value={stats.giftsReceived}
+          label="Gifts"
+          color="text-amber-500"
+        />
+      </div>
 
-// ──────────────────────────────────────────────
-// Download Data Button
-// ──────────────────────────────────────────────
-
-function DownloadDataButton() {
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  const handleDownload = useCallback(async () => {
-    setLoading(true)
-    setError(null)
-
-    try {
-      const data = await api.post<Record<string, unknown>>('/users/me/export')
-
-      // Trigger download
-      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `spark-data-export-${new Date().toISOString().split('T')[0]}.json`
-      document.body.appendChild(a)
-      a.click()
-      document.body.removeChild(a)
-      URL.revokeObjectURL(url)
-    } catch {
-      setError('Failed to export data. Please try again.')
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
-  return (
-    <div className="flex flex-col items-end gap-1">
-      <Button variant="secondary" size="sm" onClick={handleDownload} loading={loading}>
-        <Download className="h-4 w-4" />
-        Download
-      </Button>
-      {error && <p className="text-danger text-xs">{error}</p>}
-    </div>
-  )
-}
-
-// ──────────────────────────────────────────────
-// Delete Account Modal
-// ──────────────────────────────────────────────
-
-function DeleteAccountModal({ onClose }: { onClose: () => void }) {
-  const router = useRouter()
-  const [step, setStep] = useState<1 | 2>(1)
-  const [confirmText, setConfirmText] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  const handleDelete = useCallback(async () => {
-    if (confirmText !== 'DELETE') return
-
-    setLoading(true)
-    setError(null)
-
-    try {
-      await api.delete('/users/me')
-      api.clearTokens()
-      router.push('/')
-    } catch {
-      setError('Failed to delete account. Please try again or contact support.')
-      setLoading(false)
-    }
-  }, [confirmText, router])
-
-  return (
-    <div className="fixed inset-0 z-[var(--z-modal-backdrop)] flex items-center justify-center p-4">
-      {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-        onClick={onClose}
-        aria-hidden="true"
-      />
-
-      {/* Modal */}
-      <div className="border-border bg-surface-elevated relative w-full max-w-md rounded-2xl border p-6 shadow-lg">
-        {/* Close button */}
-        <button
-          onClick={onClose}
-          className="text-text-muted hover:bg-surface hover:text-text-primary absolute right-4 top-4 rounded-lg p-1 transition-colors"
-          aria-label="Close dialog"
-        >
-          <X className="h-5 w-5" />
-        </button>
-
-        {step === 1 ? (
-          <>
-            {/* Step 1: Warning */}
-            <div className="bg-danger/10 mb-4 flex h-12 w-12 items-center justify-center rounded-full">
-              <Warning className="text-danger h-6 w-6" weight="fill" />
-            </div>
-            <h2 className="text-text-primary mb-2 text-lg font-semibold">Delete Your Account?</h2>
-            <p className="text-text-secondary mb-6 text-sm leading-relaxed">
-              Are you sure? Your account will be deactivated for 30 days before permanent deletion.
-              During this period, you can reactivate by logging in. After 30 days, all your data
-              including matches, messages, photos, and tokens will be permanently deleted.
-            </p>
-            <div className="flex gap-3">
-              <Button variant="secondary" size="md" className="flex-1" onClick={onClose}>
-                Cancel
-              </Button>
-              <Button variant="danger" size="md" className="flex-1" onClick={() => setStep(2)}>
-                Continue
-              </Button>
-            </div>
-          </>
-        ) : (
-          <>
-            {/* Step 2: Confirm by typing DELETE */}
-            <div className="bg-danger/10 mb-4 flex h-12 w-12 items-center justify-center rounded-full">
-              <Trash className="text-danger h-6 w-6" weight="fill" />
-            </div>
-            <h2 className="text-text-primary mb-2 text-lg font-semibold">Confirm Deletion</h2>
-            <p className="text-text-secondary mb-4 text-sm">
-              Type <span className="text-danger font-mono font-semibold">DELETE</span> below to
-              confirm account deletion.
-            </p>
-
-            <Input
-              value={confirmText}
-              onChange={(e) => setConfirmText(e.target.value)}
-              placeholder="Type DELETE to confirm"
-              className="mb-4"
-              autoFocus
-            />
-
-            {error && (
-              <p className="bg-danger/10 text-danger mb-4 rounded-lg p-3 text-sm">{error}</p>
-            )}
-
-            <div className="flex gap-3">
-              <Button variant="secondary" size="md" className="flex-1" onClick={() => setStep(1)}>
-                Go Back
-              </Button>
-              <Button
-                variant="danger"
-                size="md"
-                className="flex-1"
-                onClick={handleDelete}
-                loading={loading}
-                disabled={confirmText !== 'DELETE'}
+      {/* ─── Photo Grid ─── */}
+      {photos.length > 0 && (
+        <Section title="Photos" action={{ label: 'Edit', href: '/profile/edit' }}>
+          <div className="grid grid-cols-3 gap-1.5">
+            {photos.slice(0, 6).map((photo, idx) => (
+              <div
+                key={photo.id}
+                className="bg-surface relative aspect-[3/4] overflow-hidden rounded-xl"
               >
-                Delete Forever
-              </Button>
-            </div>
-          </>
-        )}
-      </div>
+                <Image src={photo.url} alt={`Photo ${idx + 1}`} fill className="object-cover" />
+                {photo.isPrimary && (
+                  <div className="absolute left-1.5 top-1.5 rounded-full bg-black/50 px-2 py-0.5 text-xs text-white">
+                    Main
+                  </div>
+                )}
+              </div>
+            ))}
+            {/* Add photo slot */}
+            {photos.length < 6 && (
+              <Link
+                href="/profile/edit"
+                className="border-border-subtle bg-surface flex aspect-[3/4] flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed transition-colors"
+              >
+                <span className="text-text-muted text-2xl">+</span>
+                <span className="text-text-muted text-xs">Add photo</span>
+              </Link>
+            )}
+          </div>
+        </Section>
+      )}
+
+      {/* ─── Prompts ─── */}
+      {prompts.length > 0 && (
+        <Section title="About Me" action={{ label: 'Edit', href: '/profile/edit' }}>
+          <div className="space-y-3">
+            {prompts.map((p, idx) => (
+              <div key={idx} className="border-border bg-surface-elevated rounded-2xl border p-4">
+                <p className="text-text-muted mb-1.5 text-xs font-semibold uppercase tracking-wide">
+                  {p.question}
+                </p>
+                <p className="text-text-primary text-base leading-relaxed">{p.answer}</p>
+              </div>
+            ))}
+          </div>
+        </Section>
+      )}
+
+      {/* ─── Interests ─── */}
+      {interests.length > 0 && (
+        <Section title="Interests">
+          <div className="flex flex-wrap gap-2">
+            {interests.map((tag) => (
+              <PillTag key={tag} variant="default">
+                {tag}
+              </PillTag>
+            ))}
+          </div>
+        </Section>
+      )}
+
+      {/* ─── Gift Showcase ─── */}
+      {topGifts.length > 0 && (
+        <Section title="Top Gifts Received">
+          <div className="grid grid-cols-3 gap-3">
+            {topGifts.slice(0, 6).map((gift) => (
+              <div
+                key={gift.name}
+                className="border-border bg-surface-elevated flex flex-col items-center gap-1 rounded-2xl border p-3"
+              >
+                <span className="text-3xl">{gift.emoji}</span>
+                <span className="text-text-secondary text-xs">{gift.name}</span>
+                <span className="text-text-muted text-xs">×{gift.count}</span>
+              </div>
+            ))}
+          </div>
+        </Section>
+      )}
+
+      {/* ─── Quick links ─── */}
+      <Section title="Account">
+        <div className="space-y-1">
+          <QuickLink
+            href="/profile/wallet"
+            icon={<Coin className="h-5 w-5" />}
+            label="Wallet"
+            sublabel="Tokens & purchases"
+          />
+          <QuickLink
+            href="/profile/subscription"
+            icon={<Star className="h-5 w-5" />}
+            label="Subscription"
+            sublabel={
+              plan === 'free'
+                ? 'Upgrade to Premium'
+                : `${plan.charAt(0).toUpperCase() + plan.slice(1)} plan`
+            }
+          />
+          <QuickLink
+            href="/profile/who-liked"
+            icon={<Heart className="h-5 w-5" />}
+            label="Who Liked Me"
+            sublabel={plan === 'free' ? 'Upgrade to see' : 'See your admirers'}
+          />
+        </div>
+      </Section>
     </div>
   )
 }
 
 // ──────────────────────────────────────────────
-// Helper Components
+// Sub-components
 // ──────────────────────────────────────────────
 
-function SectionHeader({
-  icon: Icon,
-  title,
+function StatCard({
+  icon,
+  value,
+  label,
+  color,
 }: {
-  icon: React.ComponentType<{ className?: string }>
-  title: string
+  icon: React.ReactNode
+  value: number
+  label: string
+  color: string
 }) {
   return (
-    <div className="mb-3 mt-8 flex items-center gap-2">
-      <Icon className="text-text-muted h-4 w-4" />
-      <h2 className="text-text-muted text-sm font-semibold uppercase tracking-wider">{title}</h2>
+    <div className="border-border bg-surface-elevated flex flex-col items-center gap-1 rounded-2xl border p-3">
+      <span className={color}>{icon}</span>
+      <span className="text-text-primary text-xl font-bold">{value}</span>
+      <span className="text-text-muted text-xs">{label}</span>
     </div>
   )
 }
 
-function SectionCard({ children }: { children: React.ReactNode }) {
+function Section({
+  title,
+  children,
+  action,
+}: {
+  title: string
+  children: React.ReactNode
+  action?: { label: string; href: string }
+}) {
   return (
-    <div className="border-border bg-surface-elevated rounded-xl border p-4 sm:p-5">{children}</div>
+    <div className="mb-6 px-4">
+      <div className="mb-3 flex items-center justify-between">
+        <h2 className="text-text-primary text-base font-semibold">{title}</h2>
+        {action && (
+          <Link href={action.href as never} className="text-primary text-sm font-medium">
+            {action.label}
+          </Link>
+        )}
+      </div>
+      {children}
+    </div>
   )
 }
 
-function LegalLink({ href, label }: { href: string; label: string }) {
+function QuickLink({
+  href,
+  icon,
+  label,
+  sublabel,
+}: {
+  href: string
+  icon: React.ReactNode
+  label: string
+  sublabel?: string
+}) {
   return (
     <Link
       href={href as never}
-      className="text-text-secondary hover:bg-surface hover:text-text-primary flex items-center justify-between rounded-lg px-2 py-2.5 text-sm transition-colors"
+      className="text-text-primary hover:bg-surface flex items-center gap-3 rounded-xl px-3 py-3 transition-colors"
     >
-      <span>{label}</span>
-      <CaretRight className="text-text-muted h-4 w-4" />
+      <div className="text-text-secondary bg-surface flex h-9 w-9 items-center justify-center rounded-xl">
+        {icon}
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-medium">{label}</p>
+        {sublabel && <p className="text-text-muted text-xs">{sublabel}</p>}
+      </div>
+      <ArrowRight className="text-text-muted h-4 w-4" />
     </Link>
   )
 }
 
 function ProfileSkeleton() {
   return (
-    <div className="mx-auto max-w-2xl px-4 py-6 sm:py-8">
-      <div className="bg-surface mb-6 h-8 w-48 animate-pulse rounded-lg" />
-      <div className="border-border bg-surface-elevated rounded-xl border p-5">
-        <div className="flex items-center gap-4">
-          <div className="bg-surface h-14 w-14 animate-pulse rounded-full" />
-          <div className="flex-1 space-y-2">
-            <div className="bg-surface h-5 w-32 animate-pulse rounded" />
-            <div className="bg-surface h-4 w-48 animate-pulse rounded" />
-          </div>
-        </div>
+    <div className="mx-auto max-w-2xl px-4 py-6">
+      <div className="mb-6 flex flex-col items-center gap-3">
+        <Skeleton className="h-24 w-24 rounded-full" />
+        <Skeleton className="h-7 w-40 rounded-lg" />
+        <Skeleton className="h-5 w-24 rounded-lg" />
       </div>
-      <div className="mt-8 space-y-3">
-        {[1, 2, 3].map((i) => (
-          <div key={i} className="bg-surface h-12 animate-pulse rounded-lg" />
+      <div className="mb-6 grid grid-cols-3 gap-3">
+        {[0, 1, 2].map((i) => (
+          <Skeleton key={i} className="h-20 rounded-2xl" />
+        ))}
+      </div>
+      <div className="space-y-3">
+        {[0, 1, 2].map((i) => (
+          <Skeleton key={i} className="h-16 rounded-2xl" />
         ))}
       </div>
     </div>

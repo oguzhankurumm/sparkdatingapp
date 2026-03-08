@@ -6,8 +6,8 @@
 @import './tokens.css';
 
 @theme {
-  /* Font family */
-  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+  /* Font family — Saans variable font, system fallbacks */
+  --font-sans: 'Saans', ui-sans-serif, system-ui, -apple-system, sans-serif;
 
   /* Colors → bg-*, text-*, border-* utilities */
   --color-background: var(--background);
