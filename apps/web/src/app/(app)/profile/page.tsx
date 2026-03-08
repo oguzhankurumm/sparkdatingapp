@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { Avatar, Badge, Button, PillTag, ThemeToggle, Skeleton } from '@spark/ui'
+import { Avatar, Badge, Button, PillTag, ThemeToggle, Skeleton, NotificationPanel } from '@spark/ui'
 import {
   PencilSimple,
   Gear,
@@ -18,6 +18,12 @@ import {
   ArrowRight,
 } from '@phosphor-icons/react'
 import { useCurrentUser } from '@/lib/hooks/use-auth'
+import {
+  useNotificationsList,
+  useUnreadCount,
+  useMarkAllAsRead,
+  useMarkAsRead,
+} from '@/lib/hooks/use-notifications'
 import { api } from '@/lib/api-client'
 import { useQuery } from '@tanstack/react-query'
 
@@ -79,6 +85,12 @@ export default function ProfilePage() {
   const { data: profile, isLoading } = useUserProfile()
   const router = useRouter()
 
+  // Notification data
+  const { data: notificationsData } = useNotificationsList(10, 0)
+  const { data: unreadData } = useUnreadCount()
+  const markAsRead = useMarkAsRead()
+  const markAllRead = useMarkAllAsRead()
+
   if (isLoading) return <ProfileSkeleton />
 
   // Fallback for API not yet wired up — render with auth user data
@@ -107,7 +119,17 @@ export default function ProfilePage() {
             <Globe className="h-5 w-5" />
           </button>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
+          <NotificationPanel
+            notifications={notificationsData?.data ?? []}
+            unreadCount={unreadData?.count ?? 0}
+            onNotificationClick={(n) => {
+              if (!n.read) markAsRead.mutate(n.id)
+              router.push('/notifications')
+            }}
+            onMarkAllRead={() => markAllRead.mutate()}
+            onViewAll={() => router.push('/notifications')}
+          />
           <button
             onClick={() => router.push('/profile/settings')}
             className="text-text-muted hover:text-text-primary flex h-9 w-9 items-center justify-center rounded-full transition-colors"

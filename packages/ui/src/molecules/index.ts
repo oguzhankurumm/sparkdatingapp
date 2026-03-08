@@ -33,3 +33,6 @@ export type { AIGreetingCardProps } from './ai-greeting-card'
 
 export { CompatibilityInsightsBanner } from './compatibility-insights-banner'
 export type { CompatibilityInsightsBannerProps } from './compatibility-insights-banner'
+
+export { NotificationRow } from './notification-row'
+export type { NotificationRowProps } from './notification-row'

@@ -24,3 +24,6 @@ export type { ConversationListProps, ConversationItem } from './conversation-lis
 
 export { BottomSheet } from './bottom-sheet'
 export type { BottomSheetProps } from './bottom-sheet'
+
+export { NotificationPanel } from './notification-panel'
+export type { NotificationPanelProps, NotificationItem } from './notification-panel'
