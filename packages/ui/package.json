@@ -26,11 +26,13 @@
     "tailwind-merge": "^3.0.0"
   },
   "peerDependencies": {
+    "framer-motion": ">=11.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
     "@spark/tsconfig": "workspace:*",
+    "framer-motion": "^11.0.0",
     "@storybook/addon-a11y": "^10.2.16",
     "@storybook/addon-docs": "^10.2.16",
     "@storybook/addon-themes": "^10.2.16",

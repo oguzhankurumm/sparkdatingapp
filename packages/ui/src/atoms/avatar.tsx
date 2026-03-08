@@ -13,7 +13,7 @@ const avatarVariants = cva('relative inline-flex shrink-0 overflow-hidden rounde
       md: 'h-10 w-10',
       lg: 'h-12 w-12',
       xl: 'h-16 w-16',
-      '2xl': 'h-20 w-20',
+      '2xl': 'h-24 w-24',
     },
   },
   defaultVariants: {

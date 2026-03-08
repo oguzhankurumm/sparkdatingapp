@@ -21,3 +21,6 @@ export type { PlanCardProps, PlanFeature } from './plan-card'
 
 export { ConversationList } from './conversation-list'
 export type { ConversationListProps, ConversationItem } from './conversation-list'
+
+export { BottomSheet } from './bottom-sheet'
+export type { BottomSheetProps } from './bottom-sheet'

@@ -3,11 +3,14 @@ import { type VariantProps, cva } from 'class-variance-authority'
 import { Translate } from '@phosphor-icons/react'
 import { cn } from '../utils/cn'
 
-const messageBubbleVariants = cva('max-w-[75%] rounded-2xl px-4 py-2.5 text-sm', {
+const messageBubbleVariants = cva('max-w-[75%] px-4 py-2.5 text-sm', {
   variants: {
     variant: {
-      sent: 'bg-[image:var(--gradient-cta)] text-white ml-auto rounded-br-md',
-      received: 'bg-surface-elevated text-text-primary border border-border-subtle rounded-bl-md',
+      // Spec: sent = rounded-[18px_18px_4px_18px]
+      sent: 'bg-[image:var(--gradient-cta)] text-white ml-auto rounded-[18px_18px_4px_18px]',
+      // Spec: received = rounded-[18px_18px_18px_4px]
+      received:
+        'bg-surface-elevated text-text-primary border border-border-subtle rounded-[18px_18px_18px_4px]',
       gift: 'border border-secondary/30 bg-secondary/5 text-text-primary rounded-xl backdrop-blur-sm',
     },
   },

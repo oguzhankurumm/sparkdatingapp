@@ -55,7 +55,7 @@ const ProfileCard = forwardRef<HTMLDivElement, ProfileCardProps>(
         {/* LIKE / NOPE stamp */}
         {stamp === 'like' ? (
           <div
-            className="border-success text-success absolute left-6 top-8 -rotate-12 rounded-lg border-4 px-4 py-2 text-3xl font-extrabold tracking-wider"
+            className="border-like text-like absolute left-6 top-8 -rotate-12 rounded-lg border-4 px-4 py-2 text-3xl font-extrabold tracking-wider"
             style={{ opacity: stampOpacity }}
           >
             LIKE

@@ -30,3 +30,6 @@ export type { PillTagProps } from './pill-tag'
 
 export { ThemeToggle } from './theme-toggle'
 export type { ThemeToggleProps } from './theme-toggle'
+
+export { OtpInput } from './otp-input'
+export type { OtpInputProps } from './otp-input'

@@ -6,20 +6,34 @@
 @import './tokens.css';
 
 @theme {
+  /* Font family */
+  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+
   /* Colors → bg-*, text-*, border-* utilities */
   --color-background: var(--background);
+  --color-background-subtle: var(--background-subtle);
   --color-surface: var(--surface);
   --color-surface-elevated: var(--surface-elevated);
 
   --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
   --color-primary-light: var(--primary-light);
+
   --color-secondary: var(--secondary);
+  --color-secondary-light: var(--secondary-light);
+
   --color-like: var(--like);
+  --color-like-light: var(--like-light);
   --color-pass: var(--pass);
   --color-super-like: var(--super-like);
   --color-boost: var(--boost);
   --color-danger: var(--danger);
+  --color-error: var(--error);
   --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-verified: var(--verified);
+  --color-premium: var(--premium);
+  --color-platinum: var(--platinum);
 
   --color-text-primary: var(--text-primary);
   --color-text-secondary: var(--text-secondary);
@@ -28,14 +42,20 @@
 
   --color-border: var(--border);
   --color-border-subtle: var(--border-subtle);
+  --color-border-focus: var(--border-focus);
 
   /* Shadows → shadow-* utilities */
+  --shadow-xs: var(--shadow-xs);
   --shadow-sm: var(--shadow-sm);
   --shadow-md: var(--shadow-md);
   --shadow-lg: var(--shadow-lg);
+  --shadow-xl: var(--shadow-xl);
+  --shadow-cta: var(--shadow-cta);
+  --shadow-like-glow: var(--shadow-like-glow);
   --shadow-glow: var(--shadow-glow);
 
   /* Border radius → rounded-* utilities */
+  --radius-xs: var(--radius-xs);
   --radius-sm: var(--radius-sm);
   --radius-md: var(--radius-md);
   --radius-lg: var(--radius-lg);
@@ -43,13 +63,23 @@
   --radius-2xl: var(--radius-2xl);
   --radius-full: var(--radius-full);
 
-  /* Font family */
-  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
-
   /* Z-index → z-* utilities */
   --z-index-dropdown: var(--z-dropdown);
   --z-index-sticky: var(--z-sticky);
   --z-index-modal-backdrop: var(--z-modal-backdrop);
   --z-index-modal: var(--z-modal);
+  --z-index-sheet: var(--z-sheet);
   --z-index-toast: var(--z-toast);
+
+  /* Keyframe animations */
+  --animate-sheet-up: sheet-up 350ms var(--ease-spring) both;
+}
+
+@keyframes sheet-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
 }
