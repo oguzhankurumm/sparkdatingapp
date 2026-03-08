@@ -5,15 +5,24 @@ import { cn } from '../utils/cn'
 const typographyVariants = cva('', {
   variants: {
     variant: {
-      display: 'text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl',
-      h1: 'text-3xl font-bold tracking-tight sm:text-4xl',
-      h2: 'text-2xl font-bold tracking-tight',
-      h3: 'text-xl font-semibold',
-      'body-lg': 'text-lg',
-      body: 'text-base',
-      label: 'text-sm font-medium',
-      caption: 'text-xs text-text-secondary',
-      micro: 'text-[10px] text-text-muted',
+      // Spec: 36px/800, -0.025em tracking
+      display: 'text-[36px] font-extrabold leading-tight tracking-[-0.025em]',
+      // Spec: 28px/700, -0.025em tracking
+      h1: 'text-[28px] font-bold leading-tight tracking-[-0.025em]',
+      // Spec: 22px/700, -0.025em tracking
+      h2: 'text-[22px] font-bold leading-snug tracking-[-0.025em]',
+      // Spec: 18px/600, -0.025em tracking
+      h3: 'text-[18px] font-semibold leading-snug tracking-[-0.025em]',
+      // Spec: 16px/400
+      'body-lg': 'text-[16px] font-normal leading-relaxed',
+      // Spec: 15px/400
+      body: 'text-[15px] font-normal leading-relaxed',
+      // Spec: 14px/500, 0.01em tracking
+      label: 'text-[14px] font-medium leading-none tracking-[0.01em]',
+      // Spec: 12px/400, 0.01em tracking
+      caption: 'text-[12px] font-normal leading-normal tracking-[0.01em] text-text-secondary',
+      // Spec: 11px/500, 0.01em tracking
+      micro: 'text-[11px] font-medium leading-none tracking-[0.01em] text-text-muted',
     },
   },
   defaultVariants: {

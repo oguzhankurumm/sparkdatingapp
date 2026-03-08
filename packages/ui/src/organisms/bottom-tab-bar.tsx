@@ -31,7 +31,7 @@ const BottomTabBar = forwardRef<HTMLElement, BottomTabBarProps>(
         )}
         {...props}
       >
-        <div className="mx-auto flex h-16 max-w-lg items-center justify-around px-2">
+        <div className="mx-auto flex h-20 max-w-lg items-center justify-around px-2">
           {tabs.map((tab) => {
             const isActive = activeTab === tab.key
             const Icon = tab.icon

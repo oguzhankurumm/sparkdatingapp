@@ -1,2 +1,12 @@
 @import 'tailwindcss';
 @import '@spark/ui/styles/theme.css';
+
+/* Scan packages/ui so Tailwind generates utility classes used in shared components */
+@source "../../../../packages/ui/src";
+
+/* Fix: next/font injects --font-jakarta on <body> (not :root), so resolving
+   var(--font-jakarta) from :root always returns "". Declaring --font-sans on
+   body ensures both variables are on the same element and resolve correctly. */
+body {
+  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+}

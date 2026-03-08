@@ -6,7 +6,7 @@ import { SpinnerGap } from '@phosphor-icons/react'
 import { cn } from '../utils/cn'
 
 const buttonVariants = cva(
-  'inline-flex items-center justify-center font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 active:scale-[0.97]',
+  'inline-flex items-center justify-center font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 active:scale-[0.96]',
   {
     variants: {
       variant: {
@@ -16,10 +16,9 @@ const buttonVariants = cva(
           'bg-surface-elevated text-text-primary border border-border hover:bg-primary-light',
         ghost: 'text-text-secondary hover:bg-surface hover:text-text-primary',
         danger: 'bg-danger text-white hover:bg-danger/90',
-        like: 'rounded-full bg-gradient-to-r from-[#FF4F8A] to-[#FF8FA3] text-white shadow-md',
-        pass: 'rounded-full bg-pass/10 text-pass border border-pass/20',
-        'super-like':
-          'rounded-full bg-gradient-to-r from-super-like to-[#60A5FA] text-white shadow-md',
+        like: 'rounded-full bg-white text-like shadow-like-glow hover:shadow-like-glow',
+        pass: 'rounded-full bg-white text-pass shadow-sm hover:shadow-md',
+        'super-like': 'rounded-full bg-super-like/10 text-super-like shadow-sm hover:shadow-md',
       },
       size: {
         sm: 'h-8 px-3 text-sm gap-1.5',
