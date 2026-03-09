@@ -63,13 +63,107 @@ JSON format: { "isToxic": boolean, "score": number, "categories": string[], "rea
   }
 
   /**
-   * Moderate a photo using Google Gemini Vision.
-   * Analyzes image for inappropriate content and updates the photo record.
+   * Google Vision SafeSearch pre-filter (~100ms).
+   * Returns rejection if obvious NSFW content detected, null if safe.
+   */
+  private async safeSearchPreFilter(base64: string): Promise<PhotoModerationResult | null> {
+    try {
+      const apiKey = this.config.getOrThrow<string>('GEMINI_API_KEY')
+      const url = `https://vision.googleapis.com/v1/images:annotate?key=${apiKey}`
+
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          requests: [
+            {
+              image: { content: base64 },
+              features: [{ type: 'SAFE_SEARCH_DETECTION' }],
+            },
+          ],
+        }),
+      })
+
+      if (!res.ok) {
+        this.logger.warn(`SafeSearch API returned ${res.status}, skipping pre-filter`)
+        return null
+      }
+
+      const data = (await res.json()) as {
+        responses: [
+          {
+            safeSearchAnnotation?: {
+              adult: string
+              violence: string
+              racy: string
+              medical: string
+            }
+          },
+        ]
+      }
+
+      const annotation = data.responses[0]?.safeSearchAnnotation
+      if (!annotation) return null
+
+      const highRisk = ['LIKELY', 'VERY_LIKELY']
+      const categories: string[] = []
+
+      if (highRisk.includes(annotation.adult)) categories.push('adult_content')
+      if (highRisk.includes(annotation.violence)) categories.push('violence')
+      if (highRisk.includes(annotation.racy)) categories.push('racy_content')
+
+      if (categories.length > 0) {
+        this.logger.log(`SafeSearch pre-filter rejected: ${categories.join(', ')}`)
+        return {
+          status: 'rejected',
+          score: 0,
+          categories,
+          reason: `SafeSearch flagged: ${categories.join(', ')}`,
+        }
+      }
+
+      return null // safe — proceed to Gemini deep analysis
+    } catch (error) {
+      this.logger.warn('SafeSearch pre-filter failed, continuing to Gemini', error)
+      return null // fail-open: proceed to Gemini if SafeSearch unavailable
+    }
+  }
+
+  /**
+   * Moderate a photo using SafeSearch pre-filter + Gemini Vision deep analysis.
+   * SafeSearch catches obvious NSFW fast (~100ms), Gemini handles nuanced cases.
    */
   async moderatePhoto(photoId: string, imageUrl: string): Promise<PhotoModerationResult> {
     const startTime = Date.now()
 
     try {
+      // Fetch image as base64 (shared between SafeSearch and Gemini)
+      const response = await fetch(imageUrl)
+      const buffer = Buffer.from(await response.arrayBuffer())
+      const base64 = buffer.toString('base64')
+      const mimeType = response.headers.get('content-type') ?? 'image/jpeg'
+
+      // Step 1: SafeSearch pre-filter — fast rejection for obvious violations
+      const safeSearchResult = await this.safeSearchPreFilter(base64)
+      if (safeSearchResult) {
+        await this.db
+          .update(photos)
+          .set({
+            moderationStatus: safeSearchResult.status,
+            moderationScore: safeSearchResult.score,
+            moderationCategories: JSON.stringify(safeSearchResult.categories),
+            moderatedAt: new Date(),
+          })
+          .where(eq(photos.id, photoId))
+
+        const latencyMs = Date.now() - startTime
+        this.logger.log(
+          `Photo moderation (SafeSearch): ${latencyMs}ms, rejected, photoId=${photoId}`,
+        )
+        return safeSearchResult
+      }
+
+      // Step 2: Gemini Vision deep analysis for nuanced content moderation
       const model = this.gemini.getGenerativeModel({
         model: 'gemini-1.5-flash',
         safetySettings: [
@@ -91,12 +185,6 @@ JSON format: { "isToxic": boolean, "score": number, "categories": string[], "rea
           },
         ],
       })
-
-      // Fetch image as base64
-      const response = await fetch(imageUrl)
-      const buffer = Buffer.from(await response.arrayBuffer())
-      const base64 = buffer.toString('base64')
-      const mimeType = response.headers.get('content-type') ?? 'image/jpeg'
 
       const prompt = `You are a photo moderator for a dating app. Analyze this profile photo.
 
@@ -127,14 +215,13 @@ Return JSON only:
       ])
 
       const text = result.response.text().trim()
-      let parsed: PhotoModerationResult
 
       // Parse JSON from response (handle code fences)
       let raw = text
       if (raw.startsWith('```')) {
         raw = raw.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '')
       }
-      parsed = JSON.parse(raw) as PhotoModerationResult
+      const parsed = JSON.parse(raw) as PhotoModerationResult
 
       // Update photo record in database
       await this.db
@@ -150,7 +237,7 @@ Return JSON only:
 
       const latencyMs = Date.now() - startTime
       this.logger.log(
-        `Photo moderation: ${latencyMs}ms, status=${parsed.status}, photoId=${photoId}`,
+        `Photo moderation (Gemini): ${latencyMs}ms, status=${parsed.status}, photoId=${photoId}`,
       )
 
       return parsed
@@ -158,7 +245,6 @@ Return JSON only:
       Sentry.captureException(error)
       this.logger.error(`Photo moderation failed for photoId=${photoId}`, error)
 
-      // Mark as pending on failure — will be retried or manually reviewed
       return {
         status: 'rejected',
         score: 0,

@@ -41,6 +41,12 @@ export type {
   ProfileAnalysisResult,
   ProfileSuggestion,
   MessagingCoachResponse,
+  KycStatus,
+  KycInitiateResponse,
+  KycStatusResponse,
+  ReferralStatus,
+  ReferralCodeResponse,
+  ReferralApplyResponse,
 } from './business'
 export {
   FREE_MALE_FEATURES,

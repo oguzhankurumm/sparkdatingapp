@@ -8,6 +8,7 @@ import {
   withdrawals,
   coinPackages,
   photoUnlocks,
+  users,
   type Wallet,
 } from '../../database/schema'
 import {
@@ -429,6 +430,21 @@ export class WalletService {
         throw new BadRequestException(
           `Minimum withdrawal is ${TOKEN_ECONOMY.MIN_WITHDRAWAL_TOKENS} tokens`,
         )
+      }
+
+      // KYC enforcement: large withdrawals require verified identity
+      if (amount >= TOKEN_ECONOMY.KYC_REQUIRED_THRESHOLD) {
+        const [user] = await this.db
+          .select({ kycStatus: users.kycStatus })
+          .from(users)
+          .where(eq(users.id, userId))
+          .limit(1)
+
+        if (user?.kycStatus !== 'verified') {
+          throw new BadRequestException(
+            `Withdrawals of ${TOKEN_ECONOMY.KYC_REQUIRED_THRESHOLD}+ tokens require KYC verification. Please complete identity verification first.`,
+          )
+        }
       }
 
       const validMethods = ['stripe', 'bank', 'paypal', 'usdt_trc20', 'usdc_erc20']

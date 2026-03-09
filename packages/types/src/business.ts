@@ -472,3 +472,37 @@ export const AI_RATE_LIMITS = {
   MESSAGING_COACH_PER_DAY: 50,
   MESSAGING_COACH_DEBOUNCE_MS: 800,
 } as const
+
+// ── KYC ──────────────────────────────────────────────
+
+/** KYC status values */
+export type KycStatus = 'none' | 'pending' | 'verified'
+
+/** Response from POST /kyc/initiate */
+export interface KycInitiateResponse {
+  applicantId: string
+  sdkToken: string
+}
+
+/** Response from GET /kyc/status */
+export interface KycStatusResponse {
+  status: KycStatus
+}
+
+// ── Referrals ──────────────────────────────────────────────
+
+/** Referral status */
+export type ReferralStatus = 'pending' | 'completed' | 'expired'
+
+/** Response from GET /referrals/code */
+export interface ReferralCodeResponse {
+  referralCode: string
+  inviterBonus: number
+  inviteeBonus: number
+}
+
+/** Response from POST /referrals/apply */
+export interface ReferralApplyResponse {
+  success: boolean
+  bonusAwarded: number
+}

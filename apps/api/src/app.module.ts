@@ -36,6 +36,8 @@ import { SafetyModule } from './modules/safety/safety.module'
 import { AiModule } from './modules/ai/ai.module'
 import { IcebreakerModule } from './modules/icebreaker/icebreaker.module'
 import { GiphyModule } from './modules/giphy/giphy.module'
+import { KycModule } from './modules/kyc/kyc.module'
+import { EmailModule } from './modules/email/email.module'
 
 @Module({
   imports: [
@@ -77,6 +79,8 @@ import { GiphyModule } from './modules/giphy/giphy.module'
     AiModule,
     IcebreakerModule,
     GiphyModule,
+    KycModule,
+    EmailModule,
   ],
   controllers: [HealthController],
   providers: [
