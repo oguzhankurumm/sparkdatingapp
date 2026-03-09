@@ -6,6 +6,8 @@ export const aiFeatureEnum = pgEnum('ai_feature', [
   'messaging_coach',
   'toxicity_check',
   'photo_moderation',
+  'compatibility_score',
+  'date_plan',
 ])
 
 export const aiLogs = pgTable('ai_logs', {

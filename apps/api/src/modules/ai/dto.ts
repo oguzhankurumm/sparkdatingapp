@@ -21,3 +21,15 @@ export const messagingCoachSchema = z.object({
 })
 
 export type MessagingCoachInput = z.infer<typeof messagingCoachSchema>
+
+export const compatibilityScoreSchema = z.object({
+  matchId: z.string().uuid(),
+})
+
+export type CompatibilityScoreInput = z.infer<typeof compatibilityScoreSchema>
+
+export const datePlanSchema = z.object({
+  matchId: z.string().uuid(),
+})
+
+export type DatePlanInput = z.infer<typeof datePlanSchema>

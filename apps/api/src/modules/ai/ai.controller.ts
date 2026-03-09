@@ -1,11 +1,19 @@
-import { Controller, Post, Get, Body, UseGuards } from '@nestjs/common'
+import { Controller, Post, Get, Body, UseGuards, Param } from '@nestjs/common'
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard'
 import { PlanGuard } from '../../common/guards/plan.guard'
 import { CurrentUser, RequiresPlan } from '../../common/decorators'
+import type { SubscriptionPlan } from '@spark/types'
 import type { IcebreakerService } from './icebreaker.service'
 import type { ProfileAnalyzerService } from './profile-analyzer.service'
 import type { MessagingCoachService } from './messaging-coach.service'
-import { icebreakerSchema, messagingCoachSchema } from './dto'
+import type { CompatibilityScoreService } from './compatibility-score.service'
+import type { DatePlannerService } from './date-planner.service'
+import {
+  icebreakerSchema,
+  messagingCoachSchema,
+  compatibilityScoreSchema,
+  datePlanSchema,
+} from './dto'
 
 @Controller('ai')
 @UseGuards(JwtAuthGuard)
@@ -14,6 +22,8 @@ export class AiController {
     private readonly icebreakerService: IcebreakerService,
     private readonly profileAnalyzerService: ProfileAnalyzerService,
     private readonly messagingCoachService: MessagingCoachService,
+    private readonly compatibilityScoreService: CompatibilityScoreService,
+    private readonly datePlannerService: DatePlannerService,
   ) {}
 
   @Post('icebreaker')
@@ -35,5 +45,29 @@ export class AiController {
   async messagingCoach(@CurrentUser('id') userId: string, @Body() body: unknown) {
     const input = messagingCoachSchema.parse(body)
     return this.messagingCoachService.getSuggestions(userId, input)
+  }
+
+  /** GET /api/ai/compatibility/:matchId — AI compatibility score (all plans, tiered details) */
+  @Get('compatibility/:matchId')
+  async getCompatibilityScore(
+    @Param('matchId') matchId: string,
+    @CurrentUser('id') userId: string,
+    @CurrentUser('plan') userPlan: SubscriptionPlan,
+  ) {
+    compatibilityScoreSchema.parse({ matchId })
+    return this.compatibilityScoreService.getCompatibilityScore(matchId, userId, userPlan ?? 'free')
+  }
+
+  /** POST /api/ai/date-plan — AI date planning (premium+, daily limits) */
+  @Post('date-plan')
+  @UseGuards(PlanGuard)
+  @RequiresPlan('premium')
+  async generateDatePlan(
+    @CurrentUser('id') userId: string,
+    @CurrentUser('plan') userPlan: SubscriptionPlan,
+    @Body() body: unknown,
+  ) {
+    const { matchId } = datePlanSchema.parse(body)
+    return this.datePlannerService.generateDatePlans(matchId, userId, userPlan ?? 'free')
   }
 }

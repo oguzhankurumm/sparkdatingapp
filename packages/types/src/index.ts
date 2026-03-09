@@ -70,6 +70,11 @@ export type {
   BundlePackage,
   VoiceNoteUploadUrlResponse,
   RematchResponse,
+  CompatibilityScoreResult,
+  CompatibilityScoreResponse,
+  DatePlanOption,
+  DateVenue,
+  DatePlanResponse,
 } from './business'
 export {
   FREE_MALE_FEATURES,

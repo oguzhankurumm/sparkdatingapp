@@ -469,11 +469,45 @@ export interface MessagingCoachResponse {
   context: string
 }
 
+/** AI Compatibility Score — returned by GET /ai/compatibility/:matchId */
+export interface CompatibilityScoreResult {
+  score: number // 0-100
+  reasons: string[] // why compatible
+  dealbreakers: string[] // potential issues
+}
+
+/** Tiered response: Platinum gets full details, others get score only */
+export type CompatibilityScoreResponse =
+  | { score: number; reasons: string[]; dealbreakers: string[] } // platinum
+  | { score: number } // premium / free
+
+/** Date Planning AI — returned by POST /ai/date-plan */
+export interface DatePlanOption {
+  type: 'romantic' | 'fun' | 'calm'
+  title: string
+  description: string
+  venues: DateVenue[]
+  estimatedCost: string // e.g. "$50-80"
+}
+
+export interface DateVenue {
+  name: string
+  category: string
+  priceRange: '$' | '$$' | '$$$'
+}
+
+export interface DatePlanResponse {
+  plans: DatePlanOption[]
+}
+
 /** AI feature rate limits */
 export const AI_RATE_LIMITS = {
   PROFILE_ANALYSIS_PER_DAY: 3,
   MESSAGING_COACH_PER_DAY: 50,
   MESSAGING_COACH_DEBOUNCE_MS: 800,
+  COMPATIBILITY_SCORE_CACHE_HOURS: 24,
+  DATE_PLAN_PLATINUM_PER_DAY: 3,
+  DATE_PLAN_PREMIUM_PER_DAY: 1,
 } as const
 
 // ── KYC ──────────────────────────────────────────────
