@@ -539,6 +539,47 @@ export interface JoinStreamResponse {
   viewerCount: number
 }
 
+// ── Stories ──────────────────────────────────────────────
+
+/** Story media type */
+export type StoryMediaType = 'image' | 'video'
+
+/** Single story item — shape returned by story endpoints */
+export interface StoryItem {
+  id: string
+  userId: string
+  mediaUrl: string
+  mediaType: StoryMediaType
+  caption: string | null
+  expiresAt: string
+  createdAt: string
+  viewCount: number
+  hasViewed: boolean
+}
+
+/** Story feed user — user with their active stories */
+export interface StoryFeedUser {
+  userId: string
+  firstName: string
+  avatarUrl: string | null
+  isVerified: boolean
+  hasUnviewed: boolean
+  stories: StoryItem[]
+}
+
+/** Presigned upload URL response — POST /stories/upload-url */
+export interface StoryUploadUrlResponse {
+  uploadUrl: string
+  mediaUrl: string
+  key: string
+}
+
+/** Create story response — POST /stories */
+export interface CreateStoryResponse {
+  id: string
+  expiresAt: string
+}
+
 // ── Referrals ──────────────────────────────────────────────
 
 /** Referral status */
