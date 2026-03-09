@@ -141,7 +141,8 @@ export class WalletService {
       | 'admin_adjustment'
       | 'call_earning'
       | 'streak_bonus'
-      | 'badge_reward',
+      | 'badge_reward'
+      | 'bundle_bonus',
     description: string,
     referenceId?: string,
     referenceType?: string,

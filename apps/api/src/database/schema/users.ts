@@ -62,6 +62,7 @@ export const users = pgTable('users', {
   // Media
   avatarUrl: text('avatar_url'),
   voiceNoteUrl: varchar('voice_note_url', { length: 500 }),
+  voiceNoteDuration: integer('voice_note_duration'), // seconds, max 30
   videoProfileUrl: varchar('video_profile_url', { length: 500 }),
   videoProfileThumbnailUrl: varchar('video_profile_thumbnail_url', { length: 500 }),
 

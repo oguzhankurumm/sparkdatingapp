@@ -1,9 +1,18 @@
-import { Inject, Injectable, Logger, NotFoundException, ForbiddenException } from '@nestjs/common'
-import { and, eq, or, sql, desc, lt, isNull, lte } from 'drizzle-orm'
+import {
+  Inject,
+  Injectable,
+  Logger,
+  NotFoundException,
+  ForbiddenException,
+  BadRequestException,
+} from '@nestjs/common'
+import { and, eq, or, sql, desc, lt, isNull, lte, inArray } from 'drizzle-orm'
 import * as Sentry from '@sentry/node'
 import { DATABASE, type Database } from '../../database/database.module'
 import { users, matches, messages, blocks } from '../../database/schema'
 import type { Match } from '../../database/schema'
+import type { WalletService } from '../wallet/wallet.service'
+import { TOKEN_ECONOMY, type RematchResponse } from '@spark/types'
 
 const MATCH_EXPIRY_HOURS = 72
 
@@ -33,7 +42,10 @@ export interface MatchWithPartner {
 export class MatchingService {
   private readonly logger = new Logger(MatchingService.name)
 
-  constructor(@Inject(DATABASE) private readonly db: Database) {}
+  constructor(
+    @Inject(DATABASE) private readonly db: Database,
+    private readonly walletService: WalletService,
+  ) {}
 
   /**
    * Get all active matches for a user with partner info, last message, and unread count.
@@ -352,5 +364,121 @@ export class MatchingService {
     }
 
     return match
+  }
+
+  // ── Anti-Ghosting ──────────────────────────────────────
+
+  /**
+   * Mark ghost reminders as sent for the given match IDs.
+   * Called by the cron service after dispatching push notifications.
+   */
+  async markGhostReminderSent(matchIds: string[]): Promise<void> {
+    if (matchIds.length === 0) return
+
+    try {
+      await this.db
+        .update(matches)
+        .set({ ghostReminderSentAt: new Date() })
+        .where(inArray(matches.id, matchIds))
+
+      this.logger.log(`Ghost reminders marked as sent for ${matchIds.length} matches`)
+    } catch (error) {
+      Sentry.captureException(error)
+      this.logger.error('Failed to mark ghost reminders as sent', error)
+      throw error
+    }
+  }
+
+  /**
+   * Batch-expire all active matches whose expiresAt has passed.
+   * Returns the number of matches expired.
+   */
+  async expireStaleMatches(): Promise<number> {
+    try {
+      const now = new Date()
+
+      const expired = await this.db
+        .update(matches)
+        .set({ status: 'expired' })
+        .where(and(eq(matches.status, 'active'), lt(matches.expiresAt, now)))
+        .returning({ id: matches.id })
+
+      if (expired.length > 0) {
+        this.logger.log(`Expired ${expired.length} stale matches`)
+      }
+
+      return expired.length
+    } catch (error) {
+      Sentry.captureException(error)
+      this.logger.error('Failed to expire stale matches', error)
+      throw error
+    }
+  }
+
+  /**
+   * Rematch: reactivate an expired match for 50 tokens.
+   * Uses an atomic transaction — token deduction + match reactivation.
+   */
+  async rematch(matchId: string, userId: string): Promise<RematchResponse> {
+    try {
+      const [match] = await this.db.select().from(matches).where(eq(matches.id, matchId)).limit(1)
+
+      if (!match) {
+        throw new NotFoundException('Match not found')
+      }
+
+      if (match.user1Id !== userId && match.user2Id !== userId) {
+        throw new ForbiddenException('You are not part of this match')
+      }
+
+      if (match.status !== 'expired') {
+        throw new BadRequestException('Only expired matches can be rematched')
+      }
+
+      const cost = TOKEN_ECONOMY.REMATCH_COST
+      const now = new Date()
+      const newExpiresAt = new Date(now.getTime() + MATCH_EXPIRY_HOURS * 60 * 60 * 1000)
+
+      // Atomic: deduct tokens then reactivate match
+      await this.walletService.deductTokens(
+        userId,
+        cost,
+        'rematch_purchase',
+        `Rematch — reactivated match ${matchId}`,
+      )
+
+      const [updated] = await this.db
+        .update(matches)
+        .set({
+          status: 'active',
+          expiresAt: newExpiresAt,
+          ghostReminderSentAt: null,
+        })
+        .where(eq(matches.id, matchId))
+        .returning()
+
+      if (!updated) {
+        throw new Error('Failed to reactivate match')
+      }
+
+      this.logger.log(`Match ${matchId} rematched by user ${userId} for ${cost} tokens`)
+
+      return {
+        matchId: updated.id,
+        newExpiresAt: newExpiresAt.toISOString(),
+        tokensCharged: cost,
+      }
+    } catch (error) {
+      if (
+        error instanceof NotFoundException ||
+        error instanceof ForbiddenException ||
+        error instanceof BadRequestException
+      ) {
+        throw error
+      }
+      Sentry.captureException(error)
+      this.logger.error('Failed to rematch', error)
+      throw error
+    }
   }
 }

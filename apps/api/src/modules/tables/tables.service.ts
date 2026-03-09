@@ -81,7 +81,9 @@ export class TablesService {
           maxGuests,
           isVip: input.isVip,
           tokenCostToCreate: cost,
-          tokenCostToJoin: TOKEN_ECONOMY.TABLE_JOIN_COST,
+          tokenCostToJoin: input.isVip
+            ? TOKEN_ECONOMY.VIP_TABLE_JOIN_COST
+            : TOKEN_ECONOMY.TABLE_JOIN_COST,
         })
         .returning()
 
@@ -190,7 +192,7 @@ export class TablesService {
         .from(tables)
         .innerJoin(users, eq(tables.hostId, users.id))
         .where(and(...conditions))
-        .orderBy(desc(tables.createdAt))
+        .orderBy(desc(tables.isVip), desc(tables.createdAt))
         .limit(limit + 1)
 
       const hasMore = rows.length > limit
@@ -281,13 +283,13 @@ export class TablesService {
         throw new BadRequestException('This table is full.')
       }
 
-      // Deduct join tokens
-      const joinCost = TOKEN_ECONOMY.TABLE_JOIN_COST
+      // Deduct join tokens — use the table's stored cost (50 normal, 100 VIP)
+      const joinCost = table.tokenCostToJoin
       await this.walletService.deductTokens(
         userId,
         joinCost,
         'table_join',
-        `Applied to table: ${table.title}`,
+        `Applied to ${table.isVip ? 'VIP ' : ''}table: ${table.title}`,
         tableId,
         'table',
       )

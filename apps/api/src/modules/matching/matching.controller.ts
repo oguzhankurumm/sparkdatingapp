@@ -24,4 +24,10 @@ export class MatchingController {
   async unmatch(@Param('matchId') matchId: string, @CurrentUser() user: User) {
     return this.matchingService.unmatch(matchId, user.id)
   }
+
+  /** POST /api/matches/:matchId/rematch — reactivate an expired match (50 tokens) */
+  @Post(':matchId/rematch')
+  async rematch(@Param('matchId') matchId: string, @CurrentUser() user: User) {
+    return this.matchingService.rematch(matchId, user.id)
+  }
 }

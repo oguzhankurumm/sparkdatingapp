@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
+import { ScheduleModule } from '@nestjs/schedule'
 import { APP_GUARD } from '@nestjs/core'
 import { HealthController } from './health.controller'
 import { DatabaseModule } from './database/database.module'
@@ -38,6 +39,7 @@ import { IcebreakerModule } from './modules/icebreaker/icebreaker.module'
 import { GiphyModule } from './modules/giphy/giphy.module'
 import { KycModule } from './modules/kyc/kyc.module'
 import { EmailModule } from './modules/email/email.module'
+import { BundlesModule } from './modules/bundles/bundles.module'
 
 @Module({
   imports: [
@@ -46,6 +48,7 @@ import { EmailModule } from './modules/email/email.module'
       isGlobal: true,
       envFilePath: '.env.local',
     }),
+    ScheduleModule.forRoot(),
     DatabaseModule,
 
     // Feature modules
@@ -81,6 +84,7 @@ import { EmailModule } from './modules/email/email.module'
     GiphyModule,
     KycModule,
     EmailModule,
+    BundlesModule,
   ],
   controllers: [HealthController],
   providers: [

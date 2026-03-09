@@ -275,8 +275,11 @@ export const TOKEN_ECONOMY = {
   TABLE_CREATE_COST: 100,
   TABLE_JOIN_COST: 50,
   VIP_TABLE_CREATE_COST: 500,
+  VIP_TABLE_JOIN_COST: 100,
   TABLE_MAX_GUESTS_NORMAL: 5,
   TABLE_MAX_GUESTS_VIP: 10,
+  VOICE_NOTE_MAX_DURATION_SECONDS: 30,
+  VOICE_NOTE_MAX_SIZE_BYTES: 2 * 1024 * 1024, // 2MB
 } as const
 
 // ── Wallet & Earnings ──────────────────────────────────────
@@ -654,4 +657,69 @@ export interface ReferralCodeResponse {
 export interface ReferralApplyResponse {
   success: boolean
   bonusAwarded: number
+}
+
+// ── Bundles (Subscription + Token combos) ──────────────────
+
+/** Bundle tier identifiers */
+export type BundleTier = 'starter' | 'power' | 'mega'
+
+/** Bundle package definition — subscription + token combo at a discount */
+export interface BundlePackage {
+  id: BundleTier
+  name: string
+  plan: SubscriptionPlan
+  billingInterval: BillingInterval
+  bonusTokens: number
+  priceUsd: number // in cents
+  savingsPercent: number
+}
+
+/** Available bundle packages */
+export const BUNDLE_PACKAGES: BundlePackage[] = [
+  {
+    id: 'starter',
+    name: 'Starter Bundle',
+    plan: 'premium',
+    billingInterval: 'monthly',
+    bonusTokens: 500,
+    priceUsd: 2499, // $24.99
+    savingsPercent: 15,
+  },
+  {
+    id: 'power',
+    name: 'Power Bundle',
+    plan: 'premium',
+    billingInterval: 'yearly',
+    bonusTokens: 2000,
+    priceUsd: 4999, // $49.99
+    savingsPercent: 25,
+  },
+  {
+    id: 'mega',
+    name: 'Mega Bundle',
+    plan: 'platinum',
+    billingInterval: 'yearly',
+    bonusTokens: 5000,
+    priceUsd: 8999, // $89.99
+    savingsPercent: 35,
+  },
+]
+
+// ── Voice Profile ──────────────────────────────────────────
+
+/** Presigned upload URL response for voice notes */
+export interface VoiceNoteUploadUrlResponse {
+  uploadUrl: string
+  mediaUrl: string
+  key: string
+}
+
+// ── Anti-Ghosting ──────────────────────────────────────────
+
+/** Rematch response — POST /matching/:matchId/rematch */
+export interface RematchResponse {
+  matchId: string
+  newExpiresAt: string
+  tokensCharged: number
 }

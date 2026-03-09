@@ -51,6 +51,7 @@
   },
   "devDependencies": {
     "@nestjs/cli": "^10.4.9",
+    "@nestjs/schedule": "^6.1.1",
     "@nestjs/schematics": "^10.2.3",
     "@nestjs/testing": "^10.4.15",
     "@spark/tsconfig": "workspace:*",

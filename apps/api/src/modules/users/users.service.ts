@@ -6,7 +6,10 @@ import {
   ConflictException,
   BadRequestException,
 } from '@nestjs/common'
+import type { ConfigService } from '@nestjs/config'
 import { eq, and, isNull, or, lt, sql } from 'drizzle-orm'
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import * as Sentry from '@sentry/node'
 import { DATABASE, type Database } from '../../database/database.module'
 import {
@@ -27,8 +30,20 @@ import {
 @Injectable()
 export class UsersService {
   private readonly logger = new Logger(UsersService.name)
+  private readonly s3: S3Client
+  private readonly bucket: string
+  private readonly cdnBaseUrl: string
 
-  constructor(@Inject(DATABASE) private readonly db: Database) {}
+  constructor(
+    @Inject(DATABASE) private readonly db: Database,
+    private readonly configService: ConfigService,
+  ) {
+    this.s3 = new S3Client({
+      region: this.configService.getOrThrow<string>('AWS_REGION'),
+    })
+    this.bucket = this.configService.getOrThrow<string>('AWS_S3_BUCKET')
+    this.cdnBaseUrl = this.configService.getOrThrow<string>('CDN_BASE_URL')
+  }
 
   /**
    * Find a user by their UUID. Excludes soft-deleted users.
@@ -115,6 +130,7 @@ export class UsersService {
         | 'bio'
         | 'avatarUrl'
         | 'voiceNoteUrl'
+        | 'voiceNoteDuration'
         | 'videoProfileUrl'
         | 'videoProfileThumbnailUrl'
         | 'interests'
@@ -731,6 +747,84 @@ export class UsersService {
       Sentry.captureException(error)
       this.logger.error(`Error updating last active for user: ${userId}`, error)
       // Non-critical — don't throw, just log
+    }
+  }
+
+  // ── Voice Note Profile ──────────────────────────────────
+
+  /**
+   * Generate a presigned S3 upload URL for a voice note profile.
+   * Max 30 seconds, AAC format, 2MB limit.
+   */
+  async getVoiceNoteUploadUrl(
+    userId: string,
+  ): Promise<{ uploadUrl: string; mediaUrl: string; key: string }> {
+    try {
+      const key = `voice-notes/${userId}/${Date.now()}.aac`
+
+      const command = new PutObjectCommand({
+        Bucket: this.bucket,
+        Key: key,
+        ContentType: 'audio/aac',
+        ContentLength: 2 * 1024 * 1024, // 2MB max
+      })
+
+      const uploadUrl = await getSignedUrl(this.s3, command, { expiresIn: 300 })
+      const mediaUrl = `${this.cdnBaseUrl}/${key}`
+
+      return { uploadUrl, mediaUrl, key }
+    } catch (error) {
+      Sentry.captureException(error)
+      this.logger.error(`Error generating voice note upload URL for user: ${userId}`, error)
+      throw error
+    }
+  }
+
+  /**
+   * Save voice note metadata after successful upload.
+   * Validates duration is within 30-second limit.
+   */
+  async saveVoiceNote(userId: string, mediaUrl: string, duration: number): Promise<void> {
+    if (duration > 30) {
+      throw new BadRequestException('Voice note cannot exceed 30 seconds')
+    }
+    if (duration < 1) {
+      throw new BadRequestException('Voice note must be at least 1 second')
+    }
+
+    try {
+      await this.db
+        .update(users)
+        .set({
+          voiceNoteUrl: mediaUrl,
+          voiceNoteDuration: duration,
+          updatedAt: new Date(),
+        })
+        .where(eq(users.id, userId))
+    } catch (error) {
+      Sentry.captureException(error)
+      this.logger.error(`Error saving voice note for user: ${userId}`, error)
+      throw error
+    }
+  }
+
+  /**
+   * Remove a user's voice note profile.
+   */
+  async removeVoiceNote(userId: string): Promise<void> {
+    try {
+      await this.db
+        .update(users)
+        .set({
+          voiceNoteUrl: null,
+          voiceNoteDuration: null,
+          updatedAt: new Date(),
+        })
+        .where(eq(users.id, userId))
+    } catch (error) {
+      Sentry.captureException(error)
+      this.logger.error(`Error removing voice note for user: ${userId}`, error)
+      throw error
     }
   }
 }
