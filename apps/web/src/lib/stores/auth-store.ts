@@ -15,6 +15,8 @@ export interface User {
   role: 'user' | 'admin'
   onboardingCompleted: boolean
   plan: 'free' | 'premium' | 'platinum'
+  autoTranslate: boolean
+  preferredLanguage: string
 }
 
 interface AuthResponse {

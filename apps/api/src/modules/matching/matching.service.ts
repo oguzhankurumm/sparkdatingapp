@@ -321,6 +321,26 @@ export class MatchingService {
   }
 
   /**
+   * Check if two users have an active match.
+   * Used by VideoCallsService to determine call flow (direct vs. request-based).
+   */
+  async isMatched(userId1: string, userId2: string): Promise<boolean> {
+    try {
+      const [u1, u2] = userId1 < userId2 ? [userId1, userId2] : [userId2, userId1]
+      const [match] = await this.db
+        .select({ id: matches.id })
+        .from(matches)
+        .where(and(eq(matches.user1Id, u1), eq(matches.user2Id, u2), eq(matches.status, 'active')))
+        .limit(1)
+      return !!match
+    } catch (error) {
+      Sentry.captureException(error)
+      this.logger.error('Failed to check isMatched', error)
+      return false
+    }
+  }
+
+  /**
    * Verify that a user is part of a specific match and the match is active.
    * Used by MessagingService before sending/reading messages.
    */

@@ -13,6 +13,7 @@ export const env = createEnv({
     NEXT_PUBLIC_AMPLITUDE_API_KEY: z.string().optional(),
     NEXT_PUBLIC_SENTRY_DSN: z.string().url().optional(),
     NEXT_PUBLIC_STATSIG_CLIENT_SDK_KEY: z.string().optional(),
+    NEXT_PUBLIC_BRANCH_KEY: z.string().optional(),
   },
 
   runtimeEnv: {
@@ -24,6 +25,7 @@ export const env = createEnv({
     NEXT_PUBLIC_AMPLITUDE_API_KEY: process.env.NEXT_PUBLIC_AMPLITUDE_API_KEY,
     NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
     NEXT_PUBLIC_STATSIG_CLIENT_SDK_KEY: process.env.NEXT_PUBLIC_STATSIG_CLIENT_SDK_KEY,
+    NEXT_PUBLIC_BRANCH_KEY: process.env.NEXT_PUBLIC_BRANCH_KEY,
   },
 
   // Skip validation in CI/build when env vars may not be present

@@ -2,8 +2,9 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useQuery, useMutation } from '@tanstack/react-query'
 import { Button } from '@spark/ui'
+import { TOKEN_ECONOMY, COIN_PACKAGES } from '@spark/types'
+import type { WalletTransactionItem, CoinPackageItem } from '@spark/types'
 import {
   ArrowLeft,
   Coin,
@@ -13,75 +14,42 @@ import {
   PhoneCall,
   Star,
   Rocket,
+  CurrencyDollar,
+  Users,
+  Image as ImageIcon,
 } from '@phosphor-icons/react'
-import { api } from '@/lib/api-client'
+import {
+  useWalletData,
+  useWalletTransactions,
+  usePurchaseTokens,
+  useRequestWithdrawal,
+} from './hooks'
 
 // ──────────────────────────────────────────────
-// Types
+// Transaction type → icon mapping
 // ──────────────────────────────────────────────
 
-interface WalletData {
-  balance: number
-  totalEarned: number
-  totalSpent: number
-  pendingWithdrawal: number
-  transactions: WalletTx[]
-}
-
-interface WalletTx {
-  id: string
-  type: 'credit' | 'debit'
-  category:
-    | 'purchase'
-    | 'gift_received'
-    | 'gift_sent'
-    | 'call'
-    | 'boost'
-    | 'bonus'
-    | 'withdrawal'
-    | 'refund'
-  amount: number
-  description: string
-  createdAt: string
-}
-
-interface TokenBundle {
-  id: string
-  tokens: number
-  price: number // USD
-  bonus: number // extra tokens
-  popular?: boolean
-}
-
-const TOKEN_BUNDLES: TokenBundle[] = [
-  { id: 'starter', tokens: 1000, price: 10.99, bonus: 0 },
-  { id: 'basic', tokens: 2500, price: 24.99, bonus: 0 },
-  { id: 'popular', tokens: 5000, price: 44.99, bonus: 500, popular: true },
-  { id: 'value', tokens: 10000, price: 79.99, bonus: 2000 },
-  { id: 'pro', tokens: 25000, price: 179.99, bonus: 7500 },
-]
-
-const TX_CATEGORY_ICONS: Record<WalletTx['category'], React.ReactNode> = {
-  purchase: <Coin className="text-primary h-4 w-4" weight="fill" />,
+const TX_TYPE_ICONS: Record<string, React.ReactNode> = {
+  credit: <ArrowDown className="text-success h-4 w-4" weight="fill" />,
+  debit: <ArrowUp className="text-text-muted h-4 w-4" weight="fill" />,
+  signup_bonus: <Star className="h-4 w-4 text-amber-400" weight="fill" />,
+  referral_bonus: <Users className="text-primary h-4 w-4" weight="fill" />,
   gift_received: <Gift className="h-4 w-4 text-amber-500" weight="fill" />,
   gift_sent: <Gift className="text-text-muted h-4 w-4" weight="fill" />,
-  call: <PhoneCall className="text-primary h-4 w-4" weight="fill" />,
-  boost: <Rocket className="text-primary h-4 w-4" weight="fill" />,
-  bonus: <Star className="h-4 w-4 text-amber-400" weight="fill" />,
-  withdrawal: <ArrowUp className="text-text-muted h-4 w-4" weight="fill" />,
-  refund: <ArrowDown className="text-success h-4 w-4" weight="fill" />,
+  call_charge: <PhoneCall className="text-primary h-4 w-4" weight="fill" />,
+  call_earning: <PhoneCall className="text-success h-4 w-4" weight="fill" />,
+  boost_purchase: <Rocket className="text-primary h-4 w-4" weight="fill" />,
+  photo_unlock: <ImageIcon className="text-primary h-4 w-4" weight="fill" />,
+  daily_spin: <Star className="h-4 w-4 text-amber-400" weight="fill" />,
+  subscription_bonus: <CurrencyDollar className="text-primary h-4 w-4" weight="fill" />,
+  admin_adjustment: <Coin className="text-text-muted h-4 w-4" weight="fill" />,
+  table_create: <Users className="text-primary h-4 w-4" weight="fill" />,
+  table_join: <Users className="text-primary h-4 w-4" weight="fill" />,
+  rematch_purchase: <Star className="text-primary h-4 w-4" weight="fill" />,
 }
 
-// ──────────────────────────────────────────────
-// Hooks
-// ──────────────────────────────────────────────
-
-function useWallet() {
-  return useQuery({
-    queryKey: ['wallet'],
-    queryFn: () => api.get<WalletData>('/wallet/me'),
-    staleTime: 60 * 1000,
-  })
+function getTxIcon(type: string) {
+  return TX_TYPE_ICONS[type] ?? <Coin className="text-text-muted h-4 w-4" weight="fill" />
 }
 
 // ──────────────────────────────────────────────
@@ -90,31 +58,22 @@ function useWallet() {
 
 export default function WalletPage() {
   const router = useRouter()
-  const { data: wallet, isLoading } = useWallet()
+  const { data: wallet, isLoading: walletLoading } = useWalletData()
+  const { data: txData, isLoading: txLoading } = useWalletTransactions()
   const [showBundles, setShowBundles] = useState(false)
 
-  const purchaseMutation = useMutation({
-    mutationFn: (bundleId: string) =>
-      api.post<{ checkoutUrl: string }>('/wallet/purchase', { bundleId }),
-    onSuccess: (data) => {
-      window.location.href = data.checkoutUrl
-    },
-  })
+  const purchaseMutation = usePurchaseTokens()
+  const withdrawMutation = useRequestWithdrawal()
 
-  const withdrawMutation = useMutation({
-    mutationFn: () => api.post('/wallet/withdraw'),
-  })
+  if (walletLoading) return <WalletSkeleton />
 
-  if (isLoading) return <WalletSkeleton />
-
-  // Fallback values for pre-wired API
   const balance = wallet?.balance ?? 0
   const totalEarned = wallet?.totalEarned ?? 0
   const totalSpent = wallet?.totalSpent ?? 0
   const pendingWithdrawal = wallet?.pendingWithdrawal ?? 0
-  const transactions = wallet?.transactions ?? []
+  const transactions = txData?.transactions ?? []
 
-  const canWithdraw = balance >= 5000 // 5000 tokens = $50 min
+  const canWithdraw = balance >= TOKEN_ECONOMY.MIN_WITHDRAWAL_TOKENS
 
   return (
     <div className="mx-auto max-w-2xl pb-24">
@@ -137,7 +96,9 @@ export default function WalletPage() {
           <span className="text-5xl font-bold">{balance.toLocaleString()}</span>
           <span className="mb-1 text-lg text-white/70">tokens</span>
         </div>
-        <p className="mt-0.5 text-sm text-white/60">≈ ${(balance / 100).toFixed(2)} USD</p>
+        <p className="mt-0.5 text-sm text-white/60">
+          ≈ ${(balance / TOKEN_ECONOMY.USD_TO_TOKENS).toFixed(2)} USD
+        </p>
 
         <div className="mt-5 flex gap-3">
           <Button
@@ -154,7 +115,12 @@ export default function WalletPage() {
             size="sm"
             className="border-white/20 bg-white/10 text-white hover:bg-white/20 disabled:opacity-50"
             disabled={!canWithdraw || withdrawMutation.isPending}
-            onClick={() => withdrawMutation.mutate()}
+            onClick={() =>
+              withdrawMutation.mutate({
+                amount: wallet?.withdrawableBalance ?? 0,
+                method: 'stripe',
+              })
+            }
           >
             <ArrowUp className="h-4 w-4" />
             Withdraw
@@ -165,7 +131,9 @@ export default function WalletPage() {
       {/* Minimum withdrawal notice */}
       {!canWithdraw && (
         <p className="text-text-muted mx-4 mt-2 text-xs">
-          Min withdrawal: 5,000 tokens (~$50). You need {(5000 - balance).toLocaleString()} more.
+          Min withdrawal: {TOKEN_ECONOMY.MIN_WITHDRAWAL_TOKENS.toLocaleString()} tokens (~$
+          {TOKEN_ECONOMY.MIN_WITHDRAWAL_TOKENS / TOKEN_ECONOMY.USD_TO_TOKENS}). You need{' '}
+          {(TOKEN_ECONOMY.MIN_WITHDRAWAL_TOKENS - balance).toLocaleString()} more.
         </p>
       )}
 
@@ -190,7 +158,7 @@ export default function WalletPage() {
       {pendingWithdrawal > 0 && (
         <div className="border-warning/30 bg-warning/10 mx-4 mt-3 rounded-xl border px-4 py-3">
           <p className="text-warning text-sm">
-            ⏳ {pendingWithdrawal.toLocaleString()} tokens pending withdrawal
+            {pendingWithdrawal.toLocaleString()} tokens pending withdrawal
           </p>
         </div>
       )}
@@ -213,45 +181,18 @@ export default function WalletPage() {
               ✕
             </button>
           </div>
-          <p className="text-text-muted mb-5 text-sm">1 USD = 100 tokens</p>
+          <p className="text-text-muted mb-5 text-sm">
+            1 USD = {TOKEN_ECONOMY.USD_TO_TOKENS} tokens
+          </p>
 
           <div className="space-y-2">
-            {TOKEN_BUNDLES.map((bundle) => (
-              <button
-                key={bundle.id}
-                onClick={() => purchaseMutation.mutate(bundle.id)}
+            {COIN_PACKAGES.map((pkg) => (
+              <CoinPackageCard
+                key={pkg.id}
+                pkg={pkg}
+                onPurchase={() => purchaseMutation.mutate(pkg.id)}
                 disabled={purchaseMutation.isPending}
-                className={[
-                  'relative w-full rounded-2xl border p-4 text-left transition-all',
-                  bundle.popular
-                    ? 'border-primary bg-primary/5'
-                    : 'border-border bg-surface hover:border-primary/50',
-                ].join(' ')}
-              >
-                {bundle.popular && (
-                  <span className="bg-primary absolute -top-2 left-4 rounded-full px-3 py-0.5 text-xs font-bold text-white">
-                    Most Popular
-                  </span>
-                )}
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-text-primary font-semibold">
-                      {bundle.tokens.toLocaleString()} tokens
-                      {bundle.bonus > 0 && (
-                        <span className="text-success ml-1.5 text-sm font-normal">
-                          +{bundle.bonus.toLocaleString()} bonus
-                        </span>
-                      )}
-                    </p>
-                    <p className="text-text-muted text-xs">
-                      ≈ ${((bundle.tokens + bundle.bonus) / 100).toFixed(2)} value
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-text-primary text-lg font-bold">${bundle.price}</p>
-                  </div>
-                </div>
-              </button>
+              />
             ))}
           </div>
         </div>
@@ -259,9 +200,20 @@ export default function WalletPage() {
 
       {/* ─── Transaction history ─── */}
       <div className="mt-6 px-4">
-        <h2 className="text-text-primary mb-3 text-base font-semibold">Transaction History</h2>
+        <h2 className="text-text-primary mb-3 text-base font-semibold">
+          Transaction History
+          {txData && txData.total > 0 && (
+            <span className="text-text-muted ml-1.5 text-xs font-normal">({txData.total})</span>
+          )}
+        </h2>
 
-        {transactions.length === 0 ? (
+        {txLoading ? (
+          <div className="space-y-2">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="bg-surface h-14 animate-pulse rounded-xl" />
+            ))}
+          </div>
+        ) : transactions.length === 0 ? (
           <div className="flex flex-col items-center gap-2 py-12 text-center">
             <Coin className="text-text-muted h-10 w-10" />
             <p className="text-text-muted text-sm">No transactions yet</p>
@@ -269,38 +221,93 @@ export default function WalletPage() {
         ) : (
           <div className="space-y-1">
             {transactions.map((tx) => (
-              <div
-                key={tx.id}
-                className="hover:bg-surface flex items-center gap-3 rounded-xl px-3 py-3 transition-colors"
-              >
-                <div className="bg-surface-elevated flex h-10 w-10 items-center justify-center rounded-xl">
-                  {TX_CATEGORY_ICONS[tx.category]}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-text-primary text-sm font-medium">{tx.description}</p>
-                  <p className="text-text-muted text-xs">
-                    {new Date(tx.createdAt).toLocaleDateString('en-US', {
-                      month: 'short',
-                      day: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
-                  </p>
-                </div>
-                <p
-                  className={[
-                    'text-sm font-semibold',
-                    tx.type === 'credit' ? 'text-success' : 'text-text-primary',
-                  ].join(' ')}
-                >
-                  {tx.type === 'credit' ? '+' : '−'}
-                  {tx.amount.toLocaleString()}
-                </p>
-              </div>
+              <TransactionRow key={tx.id} tx={tx} />
             ))}
           </div>
         )}
       </div>
+    </div>
+  )
+}
+
+// ──────────────────────────────────────────────
+// Sub-components
+// ──────────────────────────────────────────────
+
+function CoinPackageCard({
+  pkg,
+  onPurchase,
+  disabled,
+}: {
+  pkg: CoinPackageItem
+  onPurchase: () => void
+  disabled: boolean
+}) {
+  return (
+    <button
+      onClick={onPurchase}
+      disabled={disabled}
+      className={[
+        'relative w-full rounded-2xl border p-4 text-left transition-all',
+        pkg.popular
+          ? 'border-primary bg-primary/5'
+          : 'border-border bg-surface hover:border-primary/50',
+      ].join(' ')}
+    >
+      {pkg.popular && (
+        <span className="bg-primary absolute -top-2 left-4 rounded-full px-3 py-0.5 text-xs font-bold text-white">
+          Most Popular
+        </span>
+      )}
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-text-primary font-semibold">
+            {pkg.tokens.toLocaleString()} tokens
+            {pkg.bonusTokens > 0 && (
+              <span className="text-success ml-1.5 text-sm font-normal">
+                +{pkg.bonusTokens.toLocaleString()} bonus
+              </span>
+            )}
+          </p>
+          <p className="text-text-muted text-xs">{pkg.name}</p>
+        </div>
+        <div className="text-right">
+          <p className="text-text-primary text-lg font-bold">${(pkg.priceUsd / 100).toFixed(2)}</p>
+        </div>
+      </div>
+    </button>
+  )
+}
+
+function TransactionRow({ tx }: { tx: WalletTransactionItem }) {
+  const isCredit = tx.amount > 0
+
+  return (
+    <div className="hover:bg-surface flex items-center gap-3 rounded-xl px-3 py-3 transition-colors">
+      <div className="bg-surface-elevated flex h-10 w-10 items-center justify-center rounded-xl">
+        {getTxIcon(tx.type)}
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="text-text-primary text-sm font-medium">
+          {tx.description ?? tx.type.replaceAll('_', ' ')}
+        </p>
+        <p className="text-text-muted text-xs">
+          {new Date(tx.createdAt).toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+          })}
+        </p>
+      </div>
+      <p
+        className={['text-sm font-semibold', isCredit ? 'text-success' : 'text-text-primary'].join(
+          ' ',
+        )}
+      >
+        {isCredit ? '+' : '−'}
+        {Math.abs(tx.amount).toLocaleString()}
+      </p>
     </div>
   )
 }

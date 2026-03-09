@@ -1,5 +1,6 @@
 import type { ExceptionFilter, ArgumentsHost } from '@nestjs/common'
 import { Catch, HttpException, HttpStatus, Logger } from '@nestjs/common'
+import * as Sentry from '@sentry/node'
 import type { Request, Response } from 'express'
 
 interface ErrorResponse {
@@ -55,7 +56,9 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         `${request.method} ${request.url} - ${statusCode}`,
         exception instanceof Error ? exception.stack : String(exception),
       )
-      // TODO: Add Sentry.captureException(exception) when @sentry/node is installed
+      Sentry.captureException(exception, {
+        extra: { method: request.method, url: request.url, statusCode },
+      })
     } else {
       this.logger.warn(`${request.method} ${request.url} - ${statusCode}: ${message}`)
     }

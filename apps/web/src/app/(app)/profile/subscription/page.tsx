@@ -2,17 +2,15 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useMutation } from '@tanstack/react-query'
 import { Button, Badge } from '@spark/ui'
 import { ArrowLeft, Check, Crown, Lightning, X } from '@phosphor-icons/react'
-import { api } from '@/lib/api-client'
 import { useCurrentUser } from '@/lib/hooks/use-auth'
+import { useCheckout, useManagePortal } from './hooks'
+import type { BillingInterval } from '@spark/types'
 
 // ──────────────────────────────────────────────
 // Plan data
 // ──────────────────────────────────────────────
-
-type BillingCycle = 'monthly' | 'yearly'
 
 interface PlanInfo {
   id: 'free' | 'premium' | 'platinum'
@@ -95,31 +93,15 @@ const PLANS: PlanInfo[] = [
 export default function SubscriptionPage() {
   const router = useRouter()
   const { data: user } = useCurrentUser()
-  const [billing, setBilling] = useState<BillingCycle>('yearly')
+  const [billing, setBilling] = useState<BillingInterval>('yearly')
   const [selectedPlan, setSelectedPlan] = useState<'premium' | 'platinum'>(
     user?.plan === 'platinum' ? 'platinum' : 'premium',
   )
 
   const currentPlan = user?.plan ?? 'free'
 
-  const subscribeMutation = useMutation({
-    mutationFn: (planId: string) =>
-      api.post<{ checkoutUrl: string }>('/subscriptions/checkout', {
-        planId,
-        billingCycle: billing,
-      }),
-    onSuccess: (data) => {
-      // Redirect to Stripe Checkout
-      window.location.href = data.checkoutUrl
-    },
-  })
-
-  const managePortalMutation = useMutation({
-    mutationFn: () => api.post<{ portalUrl: string }>('/subscriptions/portal'),
-    onSuccess: (data) => {
-      window.location.href = data.portalUrl
-    },
-  })
+  const subscribeMutation = useCheckout()
+  const managePortalMutation = useManagePortal()
 
   return (
     <div className="mx-auto max-w-2xl pb-24">
@@ -245,7 +227,9 @@ export default function SubscriptionPage() {
             variant="primary"
             size="lg"
             className="w-full"
-            onClick={() => subscribeMutation.mutate(selectedPlan)}
+            onClick={() =>
+              subscribeMutation.mutate({ planId: selectedPlan, billingCycle: billing })
+            }
             disabled={subscribeMutation.isPending}
           >
             {subscribeMutation.isPending
@@ -268,7 +252,9 @@ export default function SubscriptionPage() {
                 variant="primary"
                 size="lg"
                 className="w-full"
-                onClick={() => subscribeMutation.mutate('platinum')}
+                onClick={() =>
+                  subscribeMutation.mutate({ planId: 'platinum', billingCycle: billing })
+                }
                 disabled={subscribeMutation.isPending}
               >
                 Upgrade to Platinum →

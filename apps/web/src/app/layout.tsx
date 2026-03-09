@@ -5,7 +5,9 @@ import { getLocale, getMessages } from 'next-intl/server'
 import { ThemeProvider } from '@/components/theme-provider'
 import { QueryProvider } from '@/lib/query-provider'
 import { CookieConsent } from '@/components/cookie-consent'
+import { AnalyticsProvider } from '@/components/analytics-provider'
 import { ServiceWorkerRegister } from '@/components/service-worker-register'
+import { SkipNav } from '@/components/skip-nav'
 import './globals.css'
 
 export const viewport: Viewport = {
@@ -58,10 +60,11 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   return (
     <html lang={locale} suppressHydrationWarning>
       <body className="bg-background text-text-primary font-sans antialiased">
+        <SkipNav />
         <ThemeProvider>
           <QueryProvider>
             <NextIntlClientProvider messages={messages}>
-              {children}
+              <AnalyticsProvider>{children}</AnalyticsProvider>
               <CookieConsent />
             </NextIntlClientProvider>
           </QueryProvider>

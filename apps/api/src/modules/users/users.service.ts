@@ -128,6 +128,7 @@ export class UsersService {
         | 'ageRangeMax'
         | 'maxDistanceKm'
         | 'showGender'
+        | 'isPhotosPrivate'
       >
     >,
   ): Promise<User> {

@@ -4,6 +4,7 @@ import { useEffect, useRef, useCallback, useState, Fragment } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft, DotsThree, Phone, WarningCircle, Trash, Flag } from '@phosphor-icons/react'
+import dynamic from 'next/dynamic'
 import { Avatar, Button, PanicButton, Skeleton } from '@spark/ui'
 import { useCurrentUser } from '@/lib/hooks/use-auth'
 import { useSafetyStatus, useTriggerPanic } from '../../profile/hooks/use-safety'
@@ -12,7 +13,11 @@ import { useMatch, useMessages, useSendMessage, useMarkAsRead, useUnmatch } from
 import { useChatSocket } from '../use-chat-socket'
 import { ChatMessageBubble, TypingIndicator, DateSeparator, IcebreakerBanner } from '../components'
 import { ChatInputBar } from '../components/chat-input'
-import { DatingHelper } from '../components/dating-helper'
+
+// Heavy AI panel — lazy-loaded since most users won't open it on every chat
+const DatingHelper = dynamic(() =>
+  import('../components/dating-helper').then((m) => m.DatingHelper),
+)
 import { isUserOnline, groupMessagesByDate } from '../utils'
 import type { Message, GifMetadata } from '../types'
 

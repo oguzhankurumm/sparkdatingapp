@@ -134,7 +134,18 @@ const ProfileCard = forwardRef<HTMLDivElement, ProfileCardProps>(
               {distance ? <p className="mt-0.5 text-sm text-white/70">{distance}</p> : null}
               <div className="mt-2 flex gap-1.5">
                 {zodiac ? (
-                  <PillTag variant="zodiac" size="sm">
+                  <PillTag
+                    variant={
+                      zodiacCompat !== undefined
+                        ? zodiacCompat >= 80
+                          ? 'zodiac-high'
+                          : zodiacCompat >= 50
+                            ? 'zodiac-medium'
+                            : 'zodiac-low'
+                        : 'zodiac'
+                    }
+                    size="sm"
+                  >
                     {zodiac}
                     {zodiacCompat !== undefined ? ` · ${zodiacCompat}%` : null}
                   </PillTag>

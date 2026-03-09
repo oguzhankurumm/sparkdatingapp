@@ -21,6 +21,7 @@ import {
   X,
   CheckCircle,
   Lock,
+  Translate,
 } from '@phosphor-icons/react'
 import { useCurrentUser, useLogout } from '@/lib/hooks/use-auth'
 import { api } from '@/lib/api-client'
@@ -172,7 +173,7 @@ export default function SettingsPage() {
             sublabel="Translate messages automatically"
             badge={!isPremium ? 'Premium' : undefined}
             disabled={!isPremium}
-            defaultChecked={false}
+            defaultChecked={user?.autoTranslate ?? false}
             onToggle={async (v) => {
               if (!isPremium) {
                 router.push('/profile/subscription')
@@ -181,6 +182,17 @@ export default function SettingsPage() {
               await api.patch('/users/me/settings', { autoTranslate: v })
             }}
           />
+          {isPremium && (user?.autoTranslate ?? false) && (
+            <>
+              <div className="border-border-subtle border-t" />
+              <PreferredLanguageSelector
+                currentLang={user?.preferredLanguage ?? 'en'}
+                onSelect={async (lang) => {
+                  await api.patch('/users/me/settings', { preferredLanguage: lang })
+                }}
+              />
+            </>
+          )}
           <div className="border-border-subtle border-t" />
           <ToggleRow
             label="Dating Helper AI"
@@ -503,6 +515,77 @@ function SettingsSection({
         <h2 className="text-text-muted text-xs font-semibold uppercase tracking-wider">{title}</h2>
       </div>
       <div className="border-border bg-surface-elevated rounded-2xl border p-4">{children}</div>
+    </div>
+  )
+}
+
+// ──────────────────────────────────────────────
+// Preferred Language Selector
+// ──────────────────────────────────────────────
+
+const SUPPORTED_LANGUAGES = [
+  { code: 'en', label: 'English' },
+  { code: 'tr', label: 'Türkçe' },
+  { code: 'de', label: 'Deutsch' },
+  { code: 'fr', label: 'Français' },
+  { code: 'es', label: 'Español' },
+  { code: 'pt', label: 'Português' },
+  { code: 'it', label: 'Italiano' },
+  { code: 'nl', label: 'Nederlands' },
+  { code: 'pl', label: 'Polski' },
+  { code: 'ru', label: 'Русский' },
+  { code: 'ja', label: '日本語' },
+  { code: 'zh', label: '中文' },
+  { code: 'ko', label: '한국어' },
+  { code: 'ar', label: 'العربية' },
+] as const
+
+function PreferredLanguageSelector({
+  currentLang,
+  onSelect,
+}: {
+  currentLang: string
+  onSelect: (lang: string) => Promise<void>
+}) {
+  const [selected, setSelected] = useState(currentLang)
+  const [saving, setSaving] = useState(false)
+
+  const handleChange = useCallback(
+    async (lang: string) => {
+      setSelected(lang)
+      setSaving(true)
+      try {
+        await onSelect(lang)
+      } catch {
+        setSelected(currentLang) // revert
+      } finally {
+        setSaving(false)
+      }
+    },
+    [currentLang, onSelect],
+  )
+
+  return (
+    <div className="px-1">
+      <div className="mb-2 flex items-center gap-2">
+        <Translate className="text-text-muted h-4 w-4" weight="bold" />
+        <p className="text-text-primary text-sm font-medium">Preferred Language</p>
+      </div>
+      <p className="text-text-muted mb-3 text-xs">
+        Incoming messages will be translated to this language
+      </p>
+      <select
+        value={selected}
+        onChange={(e) => handleChange(e.target.value)}
+        disabled={saving}
+        className="border-border bg-surface text-text-primary w-full rounded-xl border px-3 py-2.5 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-rose-500/30 disabled:opacity-50"
+      >
+        {SUPPORTED_LANGUAGES.map((lang) => (
+          <option key={lang.code} value={lang.code}>
+            {lang.label}
+          </option>
+        ))}
+      </select>
     </div>
   )
 }

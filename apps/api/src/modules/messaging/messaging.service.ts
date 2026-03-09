@@ -1,4 +1,11 @@
-import { Inject, Injectable, Logger, ForbiddenException } from '@nestjs/common'
+import {
+  Inject,
+  Injectable,
+  Logger,
+  ForbiddenException,
+  HttpException,
+  HttpStatus,
+} from '@nestjs/common'
 import { and, eq, desc, lt, sql } from 'drizzle-orm'
 import * as Sentry from '@sentry/node'
 import { DATABASE, type Database } from '../../database/database.module'
@@ -11,6 +18,10 @@ import type { SendMessageInput } from './dto'
 const DEFAULT_PAGE_SIZE = 50
 const MAX_PAGE_SIZE = 100
 
+// GIF rate limiting: 10 GIF messages per minute per user
+const GIF_RATE_LIMIT = 10
+const GIF_RATE_WINDOW_MS = 60_000
+
 export interface PaginatedMessages {
   messages: Message[]
   nextCursor: string | null
@@ -20,6 +31,7 @@ export interface PaginatedMessages {
 @Injectable()
 export class MessagingService {
   private readonly logger = new Logger(MessagingService.name)
+  private readonly gifRateMap = new Map<string, number[]>()
 
   constructor(
     @Inject(DATABASE) private readonly db: Database,
@@ -89,6 +101,11 @@ export class MessagingService {
     try {
       // Verify user has access and match is active
       await this.matchingService.verifyMatchAccess(matchId, senderId)
+
+      // Rate-limit GIF messages: 10 per minute per user
+      if (data.type === 'gif') {
+        this.enforceGifRateLimit(senderId)
+      }
 
       const [message] = await this.db.transaction(async (tx) => {
         // Insert the message
@@ -253,6 +270,26 @@ export class MessagingService {
       Sentry.captureException(error)
       return null
     }
+  }
+
+  /**
+   * Enforce GIF rate limit: max 10 GIF messages per minute per user.
+   * Uses an in-memory sliding window. Throws TooManyRequestsException on breach.
+   */
+  private enforceGifRateLimit(userId: string): void {
+    const now = Date.now()
+    const timestamps = this.gifRateMap.get(userId) ?? []
+    const recent = timestamps.filter((t) => now - t < GIF_RATE_WINDOW_MS)
+
+    if (recent.length >= GIF_RATE_LIMIT) {
+      throw new HttpException(
+        'GIF rate limit exceeded — max 10 per minute',
+        HttpStatus.TOO_MANY_REQUESTS,
+      )
+    }
+
+    recent.push(now)
+    this.gifRateMap.set(userId, recent)
   }
 
   /**

@@ -81,6 +81,13 @@ export const users = pgTable('users', {
   isVerified: boolean('is_verified').default(false).notNull(),
   kycStatus: kycStatusEnum('kyc_status').default('none').notNull(),
 
+  // Video Call
+  isReadyForCall: boolean('is_ready_for_call').default(false).notNull(),
+  callRate: integer('call_rate').default(10).notNull(), // tokens per minute (min 10, max 100)
+
+  // Privacy
+  isPhotosPrivate: boolean('is_photos_private').default(false).notNull(),
+
   // Auth
   googleId: varchar('google_id', { length: 255 }).unique(),
   appleId: varchar('apple_id', { length: 255 }).unique(),

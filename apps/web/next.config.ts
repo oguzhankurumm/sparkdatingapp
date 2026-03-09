@@ -5,8 +5,15 @@ const nextConfig: NextConfig = {
   transpilePackages: ['@spark/ui', '@spark/hooks', '@spark/utils', '@spark/i18n'],
   typedRoutes: true,
 
-  // Tree-shake barrel exports for large packages
+  // Experimental optimizations
   experimental: {
+    // Partial Prerendering — opt in per-page with `export const experimental_ppr = true`
+    ppr: 'incremental',
+
+    // React Compiler — auto-memoises components (no more manual useMemo/useCallback)
+    reactCompiler: true,
+
+    // Tree-shake barrel exports for large packages
     optimizePackageImports: ['@phosphor-icons/react', '@spark/ui', 'framer-motion', 'zustand'],
   },
 

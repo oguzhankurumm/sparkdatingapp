@@ -1,11 +1,55 @@
 // Shared TypeScript types — used across web, admin, api, mobile
 // Types will be populated as features are built
 
-export type { SubscriptionPlan, GiftContext, BoostType, Gender, PlanFeatures } from './business'
+export type {
+  SubscriptionPlan,
+  BillingInterval,
+  GiftContext,
+  BoostType,
+  Gender,
+  PlanFeatures,
+  TableStatus,
+  TableGuestStatus,
+  TableListing,
+  TableDetail,
+  TableGuestInfo,
+  MyTable,
+  CallStatus,
+  CallHistoryItem,
+  ReadyForCallUser,
+  InitiateCallResponse,
+  AcceptCallResponse,
+  EndCallResponse,
+  WalletData,
+  WalletTransactionItem,
+  WalletTransactionsResponse,
+  CoinPackageItem,
+  WithdrawalMethod,
+  WithdrawalStatus,
+  PurchaseResponse,
+  WithdrawResponse,
+  SubscriptionCheckoutResponse,
+  SubscriptionPortalResponse,
+  SubscriptionMeResponse,
+  GiftTypeItem,
+  SendGiftRequest,
+  SendGiftResponse,
+  GiftHistoryItem,
+  GiftHistoryResponse,
+} from './business'
 export {
   FREE_MALE_FEATURES,
   FREE_FEMALE_FEATURES,
   PREMIUM_FEATURES,
   PLATINUM_FEATURES,
+  PLAN_HIERARCHY,
+  STRIPE_PRICE_IDS,
   DISCOVERY_WEIGHTS,
+  TABLE_LIMITS,
+  TOKEN_ECONOMY,
+  CALL_RATE,
+  COIN_PACKAGES,
 } from './business'
+
+export type { ZodiacSign, ZodiacElement, ZodiacInfo, ZodiacCompatibility } from './zodiac'
+export { ZODIAC_META, getCompatibilityTier } from './zodiac'

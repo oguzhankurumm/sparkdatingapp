@@ -15,6 +15,10 @@ export const transactionTypeEnum = pgEnum('transaction_type', [
   'subscription_bonus',
   'rematch_purchase',
   'admin_adjustment',
+  'photo_unlock',
+  'table_create',
+  'table_join',
+  'call_earning',
 ])
 
 export const withdrawalStatusEnum = pgEnum('withdrawal_status', [

@@ -108,14 +108,15 @@ export function useMarkAsRead(matchId: string) {
 
 /**
  * Translate a single message on demand (for messages without auto-translate).
+ * Caller passes the message text directly alongside messageId and targetLang.
  */
 export function useTranslateMessage(matchId: string) {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (payload: { messageId: string; targetLang: string }) =>
+    mutationFn: (payload: { messageId: string; text: string; targetLang: string }) =>
       api.post<{ translatedText: string; detectedSourceLang: string }>(`/translate`, {
-        text: '',
+        text: payload.text,
         targetLang: payload.targetLang,
       }),
     onSuccess: () => {

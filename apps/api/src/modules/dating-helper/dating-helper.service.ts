@@ -1,6 +1,6 @@
-import { Inject, Injectable, Logger } from '@nestjs/common'
+import { Inject, Injectable, Logger, HttpException, HttpStatus } from '@nestjs/common'
 import * as Sentry from '@sentry/node'
-import { eq } from 'drizzle-orm'
+import { eq, and, gte, sql } from 'drizzle-orm'
 import { DATABASE, type Database } from '../../database/database.module'
 import { datingHelperLogs, users, matches } from '../../database/schema'
 import type { AiService } from '../ai/ai.service'
@@ -8,6 +8,7 @@ import type { GetSuggestionsInput } from './dto'
 
 const MODEL = 'claude-sonnet-4-5'
 const MAX_TOKENS = 512
+const DAILY_LIMIT = 20
 
 export interface SuggestionsResult {
   suggestions: string[]
@@ -31,6 +32,9 @@ export class DatingHelperService {
     const startTime = Date.now()
 
     try {
+      // Enforce daily rate limit (20 suggestions/day per user)
+      await this.enforceDailyLimit(userId)
+
       // Fetch partner info from the match
       const partnerContext = await this.getPartnerContext(input.matchId, userId)
 
@@ -85,9 +89,32 @@ Generate 3 message suggestions.`
         tone,
       }
     } catch (error) {
+      if (error instanceof HttpException) throw error
       Sentry.captureException(error)
       this.logger.error('Failed to generate dating helper suggestions', error)
       throw error
+    }
+  }
+
+  /**
+   * Enforce 20 suggestions/day per user using the audit log table.
+   */
+  private async enforceDailyLimit(userId: string): Promise<void> {
+    const todayStart = new Date()
+    todayStart.setHours(0, 0, 0, 0)
+
+    const rows = await this.db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(datingHelperLogs)
+      .where(and(eq(datingHelperLogs.userId, userId), gte(datingHelperLogs.createdAt, todayStart)))
+
+    const count = rows[0]?.count ?? 0
+
+    if (count >= DAILY_LIMIT) {
+      throw new HttpException(
+        'Daily suggestion limit reached (20/day). Try again tomorrow.',
+        HttpStatus.TOO_MANY_REQUESTS,
+      )
     }
   }
 

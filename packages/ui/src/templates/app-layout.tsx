@@ -16,7 +16,9 @@ const AppLayout = forwardRef<HTMLDivElement, AppLayoutProps>(
     return (
       <div ref={ref} className={cn('bg-background min-h-screen', className)} {...props}>
         {/* Main content area — padding bottom for tab bar + safe area */}
-        <main className="pb-20">{children}</main>
+        <main id="main-content" className="pb-20">
+          {children}
+        </main>
 
         <BottomTabBar activeTab={activeTab} onTabChange={onTabChange} badges={badges} />
       </div>

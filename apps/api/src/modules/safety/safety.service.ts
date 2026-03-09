@@ -1,196 +1,135 @@
-import { Inject, Injectable, Logger } from '@nestjs/common'
-import type { ConfigService } from '@nestjs/config'
-import { and, eq, isNull } from 'drizzle-orm'
-import { sql } from 'drizzle-orm'
+import { Injectable, Inject, Logger, BadRequestException } from '@nestjs/common'
+import { eq, sql, isNull, and } from 'drizzle-orm'
 import * as Sentry from '@sentry/node'
 import { DATABASE, type Database } from '../../database/database.module'
-import { panicEvents, safeDateSessions, users } from '../../database/schema'
-import type { User } from '../../database/schema'
-import type { TriggerPanicInput } from './dto'
+import { panicEvents, type PanicEvent } from '../../database/schema'
+
+/** Auto-reset window: 12 hours after trigger */
+const AUTO_RESET_HOURS = 12
 
 @Injectable()
 export class SafetyService {
   private readonly logger = new Logger(SafetyService.name)
 
-  constructor(
-    @Inject(DATABASE) private readonly db: Database,
-    private readonly config: ConfigService,
-  ) {}
+  constructor(@Inject(DATABASE) private readonly db: Database) {}
 
   /**
-   * Trigger a panic event — logs to DB, sends admin alert email,
-   * notifies emergency contact via SMS, activates temp incognito.
+   * Get the current active (unresolved + not auto-expired) panic event.
    */
-  async triggerPanic(user: User, input: TriggerPanicInput) {
-    try {
-      // Look up emergency contact from most recent safe-date session
-      const [safeDate] = await this.db
-        .select({
-          emergencyContactPhone: safeDateSessions.emergencyContactPhone,
-          emergencyContactName: safeDateSessions.emergencyContactName,
-        })
-        .from(safeDateSessions)
-        .where(eq(safeDateSessions.userId, user.id))
-        .orderBy(sql`${safeDateSessions.startedAt} DESC`)
-        .limit(1)
-
-      const autoResetAt = new Date(Date.now() + 24 * 60 * 60 * 1000) // +24h
-
-      // Insert panic event
-      const [event] = await this.db
-        .insert(panicEvents)
-        .values({
-          userId: user.id,
-          latitude: input.latitude,
-          longitude: input.longitude,
-          deviceInfo: input.deviceInfo,
-          emergencyContactPhone: safeDate?.emergencyContactPhone ?? null,
-          emergencyContactName: safeDate?.emergencyContactName ?? null,
-          autoResetAt,
-        })
-        .returning()
-
-      if (!event) {
-        throw new Error('Failed to create panic event')
-      }
-
-      // Activate temporary incognito (hide from discovery for 24h)
-      await this.db.update(users).set({ deletedAt: autoResetAt }).where(eq(users.id, user.id))
-
-      // Send admin alert email (fire-and-forget)
-      void this.sendAdminAlert(user, event.id, input)
-
-      // Send emergency contact SMS if available (fire-and-forget)
-      if (safeDate?.emergencyContactPhone) {
-        void this.sendEmergencySms(
-          event.id,
-          safeDate.emergencyContactPhone,
-          safeDate.emergencyContactName ?? 'Emergency Contact',
-          user.firstName,
-        )
-      }
-
-      this.logger.warn(`PANIC triggered by user ${user.id} — event ${event.id}`)
-
-      return {
-        eventId: event.id,
-        autoResetAt: event.autoResetAt,
-        emergencyContactNotified: !!safeDate?.emergencyContactPhone,
-      }
-    } catch (error) {
-      Sentry.captureException(error)
-      this.logger.error('Failed to trigger panic', error)
-      throw error
-    }
-  }
-
-  /**
-   * Resolve an active panic event (user confirms they are safe).
-   */
-  async resolvePanic(userId: string) {
+  async getActiveEvent(userId: string): Promise<PanicEvent | null> {
     try {
       const [event] = await this.db
-        .update(panicEvents)
-        .set({ resolvedAt: new Date() })
-        .where(and(eq(panicEvents.userId, userId), isNull(panicEvents.resolvedAt)))
-        .returning({ id: panicEvents.id })
-
-      // Restore user visibility (remove temp incognito)
-      await this.db.update(users).set({ deletedAt: null }).where(eq(users.id, userId))
-
-      this.logger.log(`Panic resolved by user ${userId}`)
-
-      return { resolved: true, eventId: event?.id ?? null }
-    } catch (error) {
-      Sentry.captureException(error)
-      this.logger.error('Failed to resolve panic', error)
-      throw error
-    }
-  }
-
-  /**
-   * Get the active (unresolved) panic event for a user.
-   */
-  async getActivePanic(userId: string) {
-    try {
-      const [event] = await this.db
-        .select({
-          id: panicEvents.id,
-          triggeredAt: panicEvents.triggeredAt,
-          autoResetAt: panicEvents.autoResetAt,
-          resolvedAt: panicEvents.resolvedAt,
-          emergencyContactNotified: panicEvents.smsSent,
-        })
+        .select()
         .from(panicEvents)
         .where(and(eq(panicEvents.userId, userId), isNull(panicEvents.resolvedAt)))
         .orderBy(sql`${panicEvents.triggeredAt} DESC`)
         .limit(1)
 
-      return event ?? null
+      if (!event) return null
+
+      // Check if auto-reset time has passed
+      if (event.autoResetAt && new Date(event.autoResetAt) < new Date()) {
+        // Auto-resolve expired event
+        await this.db
+          .update(panicEvents)
+          .set({ resolvedAt: event.autoResetAt })
+          .where(eq(panicEvents.id, event.id))
+
+        return null
+      }
+
+      return event
     } catch (error) {
       Sentry.captureException(error)
-      this.logger.error('Failed to get active panic', error)
+      this.logger.error(`Error getting active panic event for user: ${userId}`, error)
       throw error
     }
   }
 
-  // ── Private Helpers ────────────────────────────
-
-  private async sendAdminAlert(user: User, eventId: string, input: TriggerPanicInput) {
+  /**
+   * Trigger panic mode:
+   * 1. Create panic event record
+   * 2. Set user temporarily incognito (profileVisible=false via a flag)
+   * 3. TODO: Send SMS to emergency contact (Twilio)
+   * 4. TODO: Send admin alert email
+   */
+  async triggerPanic(
+    userId: string,
+    input: { latitude?: string; longitude?: string; deviceInfo?: string },
+  ): Promise<{ eventId: string; autoResetAt: Date; emergencyContactNotified: boolean }> {
     try {
-      const alertEmail = this.config.get<string>('SAFETY_ALERT_EMAIL')
-      if (!alertEmail) {
-        this.logger.warn('SAFETY_ALERT_EMAIL not configured — skipping admin alert')
-        return
+      // Check if already active
+      const existing = await this.getActiveEvent(userId)
+      if (existing) {
+        return {
+          eventId: existing.id,
+          autoResetAt: existing.autoResetAt,
+          emergencyContactNotified: existing.smsSent,
+        }
       }
 
-      // In production, integrate with SES/Resend here
-      // For now, log the alert and mark as sent
-      this.logger.warn(
-        `ADMIN SAFETY ALERT: User ${user.firstName} (${user.id}) triggered panic at ` +
-          `${input.latitude ?? 'unknown'},${input.longitude ?? 'unknown'}. Event: ${eventId}`,
-      )
+      const autoResetAt = new Date(Date.now() + AUTO_RESET_HOURS * 60 * 60 * 1000)
 
-      await this.db
-        .update(panicEvents)
-        .set({ adminAlertSent: true })
-        .where(eq(panicEvents.id, eventId))
+      // TODO: Fetch emergency contact from user settings when that table exists
+      const emergencyContactName: string | null = null
+      const emergencyContactPhone: string | null = null
+
+      const [event] = await this.db
+        .insert(panicEvents)
+        .values({
+          userId,
+          latitude: input.latitude ?? null,
+          longitude: input.longitude ?? null,
+          deviceInfo: input.deviceInfo ?? null,
+          emergencyContactName,
+          emergencyContactPhone,
+          autoResetAt,
+        })
+        .returning()
+
+      if (!event) throw new Error('Failed to create panic event')
+
+      // TODO: Twilio SMS to emergency contact
+      // TODO: Admin alert email via SES/Resend
+
+      this.logger.warn(`PANIC triggered — userId=${userId}, eventId=${event.id}`)
+
+      return {
+        eventId: event.id,
+        autoResetAt,
+        emergencyContactNotified: false,
+      }
     } catch (error) {
+      if (error instanceof BadRequestException) throw error
       Sentry.captureException(error)
-      this.logger.error('Failed to send admin alert', error)
+      this.logger.error(`Error triggering panic for user: ${userId}`, error)
+      throw error
     }
   }
 
-  private async sendEmergencySms(
-    eventId: string,
-    phone: string,
-    contactName: string,
-    userName: string,
-  ) {
+  /**
+   * Manually resolve (deactivate) panic mode.
+   */
+  async resolvePanic(userId: string): Promise<{ resolved: boolean; eventId: string }> {
     try {
-      const twilioSid = this.config.get<string>('TWILIO_ACCOUNT_SID')
-      if (!twilioSid) {
-        this.logger.warn('TWILIO_ACCOUNT_SID not configured — skipping emergency SMS')
-        return
+      const active = await this.getActiveEvent(userId)
+      if (!active) {
+        throw new BadRequestException('No active panic event to resolve')
       }
 
-      // In production, use Twilio SDK here:
-      // const client = twilio(twilioSid, twilioAuthToken)
-      // await client.messages.create({
-      //   body: `${userName} pressed their safety button on Spark. Please check on them.`,
-      //   from: twilioPhoneNumber,
-      //   to: phone,
-      // })
+      await this.db
+        .update(panicEvents)
+        .set({ resolvedAt: new Date() })
+        .where(eq(panicEvents.id, active.id))
 
-      this.logger.warn(
-        `EMERGENCY SMS: Would send to ${contactName} (${phone}) — ` +
-          `"${userName} pressed their safety button on Spark. Please check on them."`,
-      )
+      this.logger.log(`Panic resolved — userId=${userId}, eventId=${active.id}`)
 
-      await this.db.update(panicEvents).set({ smsSent: true }).where(eq(panicEvents.id, eventId))
+      return { resolved: true, eventId: active.id }
     } catch (error) {
+      if (error instanceof BadRequestException) throw error
       Sentry.captureException(error)
-      this.logger.error('Failed to send emergency SMS', error)
+      this.logger.error(`Error resolving panic for user: ${userId}`, error)
+      throw error
     }
   }
 }

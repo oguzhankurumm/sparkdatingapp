@@ -2,7 +2,7 @@
 
 import { LikesReceivedCard, Skeleton } from '@spark/ui'
 import { Heart, CaretRight } from '@phosphor-icons/react'
-import { useLikesReceived } from '../hooks'
+import { useLikesReceived, useUnlockPhotos } from '../hooks'
 
 function formatTimeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime()
@@ -16,6 +16,7 @@ function formatTimeAgo(dateStr: string): string {
 
 export function LikesReceivedRow() {
   const { data, isLoading } = useLikesReceived()
+  const unlockMutation = useUnlockPhotos()
 
   const total = data?.total ?? 0
   const profiles = data?.profiles ?? []
@@ -63,7 +64,7 @@ export function LikesReceivedRow() {
                 blurred={profile.blurred}
                 timeAgo={formatTimeAgo(profile.likedAt)}
                 onUnlock={() => {
-                  // TODO: Navigate to Premium upsell
+                  unlockMutation.mutate(profile.id)
                 }}
               />
             ))}

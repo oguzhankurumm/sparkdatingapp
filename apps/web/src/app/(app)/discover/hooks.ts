@@ -154,3 +154,15 @@ export function useSendLike() {
     },
   })
 }
+
+export function useUnlockPhotos() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (targetUserId: string) =>
+      api.post<{ alreadyUnlocked: boolean }>(`/wallet/unlock-photos/${targetUserId}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['discover', 'likes-received'] })
+      queryClient.invalidateQueries({ queryKey: ['wallet', 'balance'] })
+    },
+  })
+}

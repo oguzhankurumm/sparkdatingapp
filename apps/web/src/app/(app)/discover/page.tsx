@@ -9,14 +9,25 @@ import {
   AnimatePresence,
   type PanInfo,
 } from 'framer-motion'
+import dynamic from 'next/dynamic'
 import { Cards, SquaresFour, FunnelSimple, X, Star, Heart, Lightning } from '@phosphor-icons/react'
 import { ProfileCard, GradientText, Button, Skeleton, StoryBar } from '@spark/ui'
 import { useDiscoverFeed, useSendLike, type DiscoverProfile } from './hooks'
-import { ReadyToCallRow } from './components/ready-to-call-row'
-import { TrendingGrid } from './components/trending-grid'
-import { NearbyTablesRow } from './components/nearby-tables-row'
-import { NearbySection } from './components/nearby-section'
-import { LikesReceivedRow } from './components/likes-received-row'
+
+// Lazy-load Browse sub-sections — only fetched when user switches to Browse mode
+const LikesReceivedRow = dynamic(() =>
+  import('./components/likes-received-row').then((m) => m.LikesReceivedRow),
+)
+const ReadyToCallRow = dynamic(() =>
+  import('./components/ready-to-call-row').then((m) => m.ReadyToCallRow),
+)
+const TrendingGrid = dynamic(() => import('./components/trending-grid').then((m) => m.TrendingGrid))
+const NearbyTablesRow = dynamic(() =>
+  import('./components/nearby-tables-row').then((m) => m.NearbyTablesRow),
+)
+const NearbySection = dynamic(() =>
+  import('./components/nearby-section').then((m) => m.NearbySection),
+)
 
 // ── Types ──────────────────────────────────────────────
 

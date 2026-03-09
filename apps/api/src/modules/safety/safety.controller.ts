@@ -1,29 +1,33 @@
 import { Controller, Get, Post, Body } from '@nestjs/common'
-import type { SafetyService } from './safety.service'
 import { CurrentUser } from '../../common/decorators'
-import type { User } from '../../database/schema'
-import type { TriggerPanicInput } from './dto'
+import type { SafetyService } from './safety.service'
 
 @Controller('safety')
 export class SafetyController {
   constructor(private readonly safetyService: SafetyService) {}
 
-  /** POST /api/safety/panic — trigger emergency panic */
-  @Post('panic')
-  async triggerPanic(@CurrentUser() user: User, @Body() body: TriggerPanicInput) {
-    return this.safetyService.triggerPanic(user, body)
-  }
-
-  /** POST /api/safety/resolve — user confirms they are safe */
-  @Post('resolve')
-  async resolvePanic(@CurrentUser() user: User) {
-    return this.safetyService.resolvePanic(user.id)
-  }
-
-  /** GET /api/safety/status — check for active panic event */
   @Get('status')
-  async getStatus(@CurrentUser() user: User) {
-    const event = await this.safetyService.getActivePanic(user.id)
+  async getStatus(@CurrentUser('id') userId: string) {
+    const event = await this.safetyService.getActiveEvent(userId)
     return { active: !!event, event }
+  }
+
+  @Post('panic')
+  async triggerPanic(
+    @CurrentUser('id') userId: string,
+    @Body() body: { latitude?: string; longitude?: string; deviceInfo?: Record<string, unknown> },
+  ) {
+    const result = await this.safetyService.triggerPanic(userId, {
+      latitude: body.latitude,
+      longitude: body.longitude,
+      deviceInfo: body.deviceInfo ? JSON.stringify(body.deviceInfo) : undefined,
+    })
+    return result
+  }
+
+  @Post('resolve')
+  async resolvePanic(@CurrentUser('id') userId: string) {
+    const result = await this.safetyService.resolvePanic(userId)
+    return result
   }
 }

@@ -68,3 +68,6 @@ export * from './data-exports'
 
 // AI — Compatibility
 export * from './compatibility'
+
+// Photo Unlocks
+export * from './photo-unlocks'

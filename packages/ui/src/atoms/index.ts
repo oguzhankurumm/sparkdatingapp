@@ -36,3 +36,6 @@ export type { OtpInputProps } from './otp-input'
 
 export { BlurredImage, blurredImageVariants } from './blurred-image'
 export type { BlurredImageProps } from './blurred-image'
+
+export { PanicButton, panicButtonVariants } from './panic-button'
+export type { PanicButtonProps } from './panic-button'

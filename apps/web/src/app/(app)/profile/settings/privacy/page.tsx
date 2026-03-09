@@ -12,6 +12,7 @@ import {
   EyeSlash,
   Users,
   UserCircle,
+  Images,
 } from '@phosphor-icons/react'
 import { api } from '@/lib/api-client'
 
@@ -36,6 +37,8 @@ export default function PrivacySettingsPage() {
   const [profileVisible, setProfileVisible] = useState(true)
   // Online status
   const [showOnline, setShowOnline] = useState(true)
+  // Photo privacy
+  const [photosPrivate, setPhotosPrivate] = useState(false)
 
   const updateSetting = useCallback(async (key: string, value: unknown) => {
     setSaving(true)
@@ -223,6 +226,33 @@ export default function PrivacySettingsPage() {
               disabled={saving}
             />
           </div>
+        </PrivacySection>
+
+        {/* ─── Photo Privacy ─── */}
+        <PrivacySection
+          title="Private Photos"
+          icon={Images}
+          description="When enabled, your photos are blurred for non-matches. Others can unlock them for 100 tokens."
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-text-primary text-sm font-medium">
+              {photosPrivate ? 'Photos are private' : 'Photos are public'}
+            </span>
+            <Toggle
+              checked={photosPrivate}
+              onChange={(v) => {
+                setPhotosPrivate(v)
+                updateSetting('isPhotosPrivate', v)
+              }}
+              disabled={saving}
+            />
+          </div>
+          {photosPrivate && (
+            <p className="text-text-muted mt-2 text-xs">
+              Non-matches will see blurred photos. They can spend 100 tokens to unlock your full
+              photos. Matches always see clear photos.
+            </p>
+          )}
         </PrivacySection>
       </div>
     </div>

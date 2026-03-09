@@ -2,10 +2,12 @@
 
 import { useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useQuery, useMutation } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { Button } from '@spark/ui'
 import { ArrowLeft, Coin } from '@phosphor-icons/react'
 import { api } from '@/lib/api-client'
+import { useSendGift } from '@/lib/hooks/use-gifts'
+import type { GiftContext } from '@spark/types'
 
 // ──────────────────────────────────────────────
 // Types
@@ -22,11 +24,6 @@ interface GiftItem {
 }
 
 type GiftCategory = 'flowers' | 'sweets' | 'luxury' | 'fun' | 'music' | 'animals'
-
-interface SendGiftResponse {
-  success: boolean
-  newBalance: number
-}
 
 // ──────────────────────────────────────────────
 // Static gift catalog
@@ -128,17 +125,6 @@ function useWalletBalance() {
   })
 }
 
-function useSendGift(recipientId: string | null) {
-  return useMutation({
-    mutationFn: ({ giftId, context }: { giftId: string; context: 'chat' | 'call' | 'stream' }) =>
-      api.post<SendGiftResponse>('/gifts/send', {
-        recipientId,
-        giftId,
-        context,
-      }),
-  })
-}
-
 // ──────────────────────────────────────────────
 // Inner page (needs Suspense for useSearchParams)
 // ──────────────────────────────────────────────
@@ -152,10 +138,12 @@ function ShopContent() {
   const [selectedGift, setSelectedGift] = useState<GiftItem | null>(null)
   const [sentGiftId, setSentGiftId] = useState<string | null>(null)
 
+  const giftContext = (searchParams.get('context') as GiftContext) ?? 'chat'
+
   const { data: walletData } = useWalletBalance()
   const balance = walletData?.balance ?? 0
 
-  const sendGiftMutation = useSendGift(recipientId)
+  const sendGiftMutation = useSendGift()
 
   const filteredGifts =
     activeCategory === 'all'
@@ -167,7 +155,11 @@ function ShopContent() {
     if (!recipientId) return
 
     try {
-      await sendGiftMutation.mutateAsync({ giftId: gift.id, context: 'chat' })
+      await sendGiftMutation.mutateAsync({
+        recipientId,
+        giftTypeId: gift.id,
+        context: giftContext,
+      })
       setSentGiftId(gift.id)
       setSelectedGift(null)
 

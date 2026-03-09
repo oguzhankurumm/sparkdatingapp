@@ -17,6 +17,7 @@
     "clean": "rm -rf dist .turbo node_modules"
   },
   "dependencies": {
+    "@amplitude/analytics-node": "^1.5.42",
     "@anthropic-ai/sdk": "^0.78.0",
     "@nestjs/common": "^10.4.15",
     "@nestjs/config": "^3.3.0",
@@ -26,6 +27,7 @@
     "@nestjs/platform-express": "^10.4.15",
     "@nestjs/platform-socket.io": "^10.4.15",
     "@nestjs/websockets": "^10.4.15",
+    "@sentry/node": "^10.42.0",
     "@spark/types": "workspace:*",
     "@spark/validators": "workspace:*",
     "bcrypt": "^6.0.0",
@@ -38,13 +40,13 @@
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
     "socket.io": "^4.8.3",
+    "statsig-node": "^6.5.1",
     "zod": "^3.24.1"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.4.9",
     "@nestjs/schematics": "^10.2.3",
     "@nestjs/testing": "^10.4.15",
-    "@sentry/node": "^10.42.0",
     "@spark/tsconfig": "workspace:*",
     "@types/bcrypt": "^6.0.0",
     "@types/express": "^5.0.0",
