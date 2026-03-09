@@ -139,7 +139,9 @@ export class WalletService {
       | 'daily_spin'
       | 'subscription_bonus'
       | 'admin_adjustment'
-      | 'call_earning',
+      | 'call_earning'
+      | 'streak_bonus'
+      | 'badge_reward',
     description: string,
     referenceId?: string,
     referenceType?: string,

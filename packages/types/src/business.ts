@@ -580,6 +580,64 @@ export interface CreateStoryResponse {
   expiresAt: string
 }
 
+// ── Gamification (Badges + Streak + Leaderboard) ──────────
+
+/** Badge category groupings */
+export type BadgeCategory = 'social' | 'engagement' | 'milestone' | 'special'
+
+/** Badge definition — static config, not from DB */
+export interface BadgeDefinition {
+  badgeId: string
+  name: string
+  description: string
+  category: BadgeCategory
+  iconUrl: string
+  tokenReward: number
+}
+
+/** Earned badge — from DB, returned to client */
+export interface BadgeItem {
+  badgeId: string
+  name: string
+  description: string | null
+  iconUrl: string | null
+  tokenReward: number
+  isDisplayed: boolean
+  earnedAt: string
+}
+
+/** Streak status — returned by GET /badges/streak */
+export interface StreakResult {
+  currentStreak: number
+  longestStreak: number
+  lastActiveDate: string | null
+  todayRecorded: boolean
+  nextMilestone: number | null
+  nextMilestoneReward: number | null
+}
+
+/** Leaderboard category */
+export type LeaderboardCategory = 'gifters' | 'streamers' | 'matchers' | 'streakers'
+
+/** Single leaderboard entry */
+export interface LeaderboardEntry {
+  rank: number
+  userId: string
+  firstName: string
+  avatarUrl: string | null
+  isVerified: boolean
+  score: number
+}
+
+/** Leaderboard response — for a specific category */
+export interface LeaderboardResponse {
+  category: LeaderboardCategory
+  weekStart: string
+  entries: LeaderboardEntry[]
+  myRank: number | null
+  myScore: number | null
+}
+
 // ── Referrals ──────────────────────────────────────────────
 
 /** Referral status */
