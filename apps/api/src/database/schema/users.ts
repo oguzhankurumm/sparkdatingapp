@@ -65,6 +65,7 @@ export const users = pgTable('users', {
   voiceNoteDuration: integer('voice_note_duration'), // seconds, max 30
   videoProfileUrl: varchar('video_profile_url', { length: 500 }),
   videoProfileThumbnailUrl: varchar('video_profile_thumbnail_url', { length: 500 }),
+  videoProfileDuration: integer('video_profile_duration'), // seconds, max 15
 
   // Interests (stored as JSON array of string IDs)
   interests: text('interests').array(),
