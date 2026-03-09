@@ -489,6 +489,56 @@ export interface KycStatusResponse {
   status: KycStatus
 }
 
+// ── Live Stream ──────────────────────────────────────────────
+
+/** Stream status values */
+export type StreamStatus = 'live' | 'ended' | 'banned'
+
+/** Stream category options */
+export type StreamCategory = 'chat' | 'music' | 'gaming' | 'lifestyle' | 'dating' | 'other'
+
+/** Stream listing — shape returned by GET /streams/active */
+export interface StreamListing {
+  id: string
+  hostId: string
+  hostFirstName: string
+  hostAvatarUrl: string | null
+  hostIsVerified: boolean
+  title: string | null
+  category: StreamCategory | null
+  viewerCount: number
+  startedAt: string
+}
+
+/** Stream detail — shape returned by GET /streams/:id */
+export interface StreamDetail extends StreamListing {
+  livekitRoom: string
+  peakViewerCount: number
+  totalGiftsReceived: number
+  totalTokensEarned: number
+  status: StreamStatus
+}
+
+/** Start stream response — POST /streams/start */
+export interface StartStreamResponse {
+  streamId: string
+  livekitRoom: string
+}
+
+/** End stream response — POST /streams/:id/end */
+export interface EndStreamResponse {
+  durationSeconds: number
+  peakViewerCount: number
+  totalGiftsReceived: number
+  totalTokensEarned: number
+}
+
+/** Join stream response — POST /streams/:id/join */
+export interface JoinStreamResponse {
+  livekitRoom: string
+  viewerCount: number
+}
+
 // ── Referrals ──────────────────────────────────────────────
 
 /** Referral status */
