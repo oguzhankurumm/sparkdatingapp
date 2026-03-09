@@ -16,6 +16,7 @@ import { z } from 'zod'
 
 const initiateCallSchema = z.object({
   receiverId: z.string().uuid(),
+  callType: z.enum(['video', 'audio']).default('video'),
 })
 
 const setCallRateSchema = z.object({
@@ -38,7 +39,7 @@ export class VideoCallsController {
     if (!parsed.success) {
       throw new BadRequestException(parsed.error.flatten().fieldErrors)
     }
-    return this.videoCallsService.initiateCall(userId, parsed.data.receiverId)
+    return this.videoCallsService.initiateCall(userId, parsed.data.receiverId, parsed.data.callType)
   }
 
   /** PATCH /api/video-calls/:id/accept — accept an incoming call */

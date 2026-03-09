@@ -6,7 +6,7 @@ import {
   ForbiddenException,
   BadRequestException,
 } from '@nestjs/common'
-import { and, eq, or, sql, desc, lt, isNull, lte, inArray } from 'drizzle-orm'
+import { and, eq, or, sql, desc, lt, gt, isNull, isNotNull, lte, inArray } from 'drizzle-orm'
 import * as Sentry from '@sentry/node'
 import { DATABASE, type Database } from '../../database/database.module'
 import { users, matches, messages, blocks } from '../../database/schema'
@@ -20,7 +20,7 @@ export interface MatchWithPartner {
   id: string
   status: 'active' | 'expired' | 'unmatched'
   matchedAt: Date
-  expiresAt: Date
+  expiresAt: Date | null
   lastMessageAt: Date | null
   partner: {
     id: string
@@ -261,31 +261,49 @@ export class MatchingService {
   }
 
   /**
-   * Extend match expiry: reset expiresAt to lastMessageAt + 72h.
-   * Called whenever a new message is sent in the match.
+   * Handle a new message sent in a match:
+   * - If this is the FIRST message → set firstMessageAt + nullify expiresAt (match becomes permanent)
+   * - Always update lastMessageAt
    */
-  async extendExpiry(matchId: string): Promise<void> {
+  async handleMessageSent(matchId: string): Promise<void> {
     try {
       const now = new Date()
-      const newExpiry = new Date(now.getTime() + MATCH_EXPIRY_HOURS * 60 * 60 * 1000)
 
-      await this.db
-        .update(matches)
-        .set({
-          expiresAt: newExpiry,
-          lastMessageAt: now,
-        })
+      // Check if this match already has a first message
+      const [match] = await this.db
+        .select({ firstMessageAt: matches.firstMessageAt })
+        .from(matches)
         .where(eq(matches.id, matchId))
+        .limit(1)
+
+      if (!match) return
+
+      if (!match.firstMessageAt) {
+        // First message ever — make match permanent
+        await this.db
+          .update(matches)
+          .set({
+            firstMessageAt: now,
+            lastMessageAt: now,
+            expiresAt: null, // permanent — no longer expires
+          })
+          .where(eq(matches.id, matchId))
+
+        this.logger.log(`Match ${matchId} made permanent — first message sent`)
+      } else {
+        // Subsequent message — just update lastMessageAt
+        await this.db.update(matches).set({ lastMessageAt: now }).where(eq(matches.id, matchId))
+      }
     } catch (error) {
       Sentry.captureException(error)
-      this.logger.error('Failed to extend match expiry', error)
+      this.logger.error('Failed to handle message sent for match', error)
       throw error
     }
   }
 
   /**
-   * Find all matches that have passed their expiresAt — for cron-based cleanup.
-   * Only returns active matches (not already expired or unmatched).
+   * Find all active matches with a non-null expiresAt that has passed.
+   * Permanent matches (expiresAt = null) are never expired.
    */
   async getExpiredMatches(): Promise<Match[]> {
     try {
@@ -294,7 +312,13 @@ export class MatchingService {
       return this.db
         .select()
         .from(matches)
-        .where(and(eq(matches.status, 'active'), lt(matches.expiresAt, now)))
+        .where(
+          and(
+            eq(matches.status, 'active'),
+            isNotNull(matches.expiresAt),
+            lt(matches.expiresAt, now),
+          ),
+        )
     } catch (error) {
       Sentry.captureException(error)
       this.logger.error('Failed to get expired matches', error)
@@ -303,10 +327,8 @@ export class MatchingService {
   }
 
   /**
-   * Find matches that are candidates for ghost reminders:
-   * - Active matches
-   * - expiresAt is within the next 24 hours (i.e., only 24h left)
-   * - ghostReminderSentAt is null (reminder not yet sent)
+   * Ghost reminders: matches within 24h of expiry, not yet notified.
+   * Only non-permanent matches (expiresAt IS NOT NULL).
    */
   async getGhostReminderCandidates(): Promise<Match[]> {
     try {
@@ -319,15 +341,64 @@ export class MatchingService {
         .where(
           and(
             eq(matches.status, 'active'),
+            isNotNull(matches.expiresAt),
             isNull(matches.ghostReminderSentAt),
             lte(matches.expiresAt, twentyFourHoursFromNow),
-            // Still active — not yet expired
-            sql`${matches.expiresAt} > ${now}`,
+            gt(matches.expiresAt, now),
           ),
         )
     } catch (error) {
       Sentry.captureException(error)
       this.logger.error('Failed to get ghost reminder candidates', error)
+      throw error
+    }
+  }
+
+  /**
+   * Urgent reminders: matches within 6h of expiry, not yet notified.
+   * Ghost reminder (24h) must already have been sent.
+   */
+  async getUrgentReminderCandidates(): Promise<Match[]> {
+    try {
+      const now = new Date()
+      const sixHoursFromNow = new Date(now.getTime() + 6 * 60 * 60 * 1000)
+
+      return this.db
+        .select()
+        .from(matches)
+        .where(
+          and(
+            eq(matches.status, 'active'),
+            isNotNull(matches.expiresAt),
+            isNull(matches.urgentReminderSentAt),
+            isNotNull(matches.ghostReminderSentAt), // 24h already sent
+            lte(matches.expiresAt, sixHoursFromNow),
+            gt(matches.expiresAt, now),
+          ),
+        )
+    } catch (error) {
+      Sentry.captureException(error)
+      this.logger.error('Failed to get urgent reminder candidates', error)
+      throw error
+    }
+  }
+
+  /**
+   * Mark urgent reminders (6h) as sent for the given match IDs.
+   */
+  async markUrgentReminderSent(matchIds: string[]): Promise<void> {
+    if (matchIds.length === 0) return
+
+    try {
+      await this.db
+        .update(matches)
+        .set({ urgentReminderSentAt: new Date() })
+        .where(inArray(matches.id, matchIds))
+
+      this.logger.log(`Urgent reminders marked as sent for ${matchIds.length} matches`)
+    } catch (error) {
+      Sentry.captureException(error)
+      this.logger.error('Failed to mark urgent reminders as sent', error)
       throw error
     }
   }
@@ -391,23 +462,30 @@ export class MatchingService {
 
   /**
    * Batch-expire all active matches whose expiresAt has passed.
-   * Returns the number of matches expired.
+   * Permanent matches (expiresAt = null) are never expired.
+   * Returns expired match rows (for notification dispatch).
    */
-  async expireStaleMatches(): Promise<number> {
+  async expireStaleMatches(): Promise<Match[]> {
     try {
       const now = new Date()
 
       const expired = await this.db
         .update(matches)
         .set({ status: 'expired' })
-        .where(and(eq(matches.status, 'active'), lt(matches.expiresAt, now)))
-        .returning({ id: matches.id })
+        .where(
+          and(
+            eq(matches.status, 'active'),
+            isNotNull(matches.expiresAt),
+            lt(matches.expiresAt, now),
+          ),
+        )
+        .returning()
 
       if (expired.length > 0) {
         this.logger.log(`Expired ${expired.length} stale matches`)
       }
 
-      return expired.length
+      return expired
     } catch (error) {
       Sentry.captureException(error)
       this.logger.error('Failed to expire stale matches', error)
@@ -453,6 +531,8 @@ export class MatchingService {
           status: 'active',
           expiresAt: newExpiresAt,
           ghostReminderSentAt: null,
+          urgentReminderSentAt: null,
+          firstMessageAt: null,
         })
         .where(eq(matches.id, matchId))
         .returning()

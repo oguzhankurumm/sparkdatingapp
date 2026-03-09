@@ -9,6 +9,8 @@ export const callStatusEnum = pgEnum('call_status', [
   'declined',
 ])
 
+export const callTypeEnum = pgEnum('call_type', ['video', 'audio'])
+
 export const videoCalls = pgTable('video_calls', {
   id: uuid('id').primaryKey().defaultRandom(),
   callerId: uuid('caller_id')
@@ -18,6 +20,7 @@ export const videoCalls = pgTable('video_calls', {
     .notNull()
     .references(() => users.id, { onDelete: 'cascade' }),
   status: callStatusEnum('status').default('ringing').notNull(),
+  callType: callTypeEnum('call_type').default('video').notNull(),
   livekitRoom: varchar('livekit_room', { length: 255 }),
   durationSeconds: integer('duration_seconds').default(0).notNull(),
   totalTokensCharged: integer('total_tokens_charged').default(0).notNull(),

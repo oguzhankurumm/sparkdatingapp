@@ -39,11 +39,13 @@ export class VideoCallsService {
   async initiateCall(
     callerId: string,
     receiverId: string,
+    callType: 'video' | 'audio' = 'video',
   ): Promise<{
     callId: string
     livekitRoom: string
     tokenRatePerMinute: number
     isDirectCall: boolean
+    callType: 'video' | 'audio'
   }> {
     try {
       if (callerId === receiverId) {
@@ -91,8 +93,8 @@ export class VideoCallsService {
       await this.ensureNoActiveCall(callerId)
       await this.ensureNoActiveCall(receiverId)
 
-      // Create room name
-      const livekitRoom = `call_${callerId.slice(0, 8)}_${receiverId.slice(0, 8)}_${Date.now()}`
+      // Create room name — prefix with call type for LiveKit track config
+      const livekitRoom = `${callType}_${callerId.slice(0, 8)}_${receiverId.slice(0, 8)}_${Date.now()}`
 
       // Create call record
       const [call] = await this.db
@@ -101,6 +103,7 @@ export class VideoCallsService {
           callerId,
           receiverId,
           status: 'ringing',
+          callType,
           livekitRoom,
           tokenRatePerMinute: receiver.callRate,
         })
@@ -111,7 +114,7 @@ export class VideoCallsService {
       }
 
       this.logger.log(
-        `Call initiated: ${call.id} from ${callerId} to ${receiverId} (rate: ${receiver.callRate}t/min, matched: ${isMatched})`,
+        `Call initiated: ${call.id} (${callType}) from ${callerId} to ${receiverId} (rate: ${receiver.callRate}t/min, matched: ${isMatched})`,
       )
 
       return {
@@ -119,6 +122,7 @@ export class VideoCallsService {
         livekitRoom: call.livekitRoom!,
         tokenRatePerMinute: call.tokenRatePerMinute,
         isDirectCall: isMatched,
+        callType,
       }
     } catch (error) {
       if (
@@ -143,6 +147,7 @@ export class VideoCallsService {
   ): Promise<{
     livekitRoom: string
     tokenRatePerMinute: number
+    callType: 'video' | 'audio'
   }> {
     try {
       const call = await this.getCallOrThrow(callId)
@@ -177,6 +182,7 @@ export class VideoCallsService {
       return {
         livekitRoom: updated.livekitRoom!,
         tokenRatePerMinute: updated.tokenRatePerMinute,
+        callType: updated.callType as 'video' | 'audio',
       }
     } catch (error) {
       if (
@@ -328,6 +334,7 @@ export class VideoCallsService {
       partnerFirstName: string
       partnerAvatarUrl: string | null
       direction: 'outgoing' | 'incoming'
+      callType: string
       status: string
       durationSeconds: number
       totalTokensCharged: number
@@ -375,6 +382,7 @@ export class VideoCallsService {
             direction: (call.callerId === userId ? 'outgoing' : 'incoming') as
               | 'outgoing'
               | 'incoming',
+            callType: call.callType,
             status: call.status,
             durationSeconds: call.durationSeconds,
             totalTokensCharged: call.totalTokensCharged,
