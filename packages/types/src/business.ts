@@ -425,3 +425,50 @@ export interface SubscriptionMeResponse {
   cancelledAt: string | null
   features: PlanFeatures
 }
+
+// ── AI Suite ──────────────────────────────────────────────
+
+/** Toxicity check result — returned by ModerationService.checkToxicity() */
+export interface ToxicityCheckResult {
+  isToxic: boolean
+  score: number
+  categories: string[]
+  reason: string | null
+}
+
+/** Photo moderation result — returned by ModerationService.moderatePhoto() */
+export interface PhotoModerationResult {
+  status: 'approved' | 'rejected'
+  score: number
+  categories: string[]
+  reason: string | null
+}
+
+/** Profile analysis result — returned by GET /ai/profile-analysis */
+export interface ProfileAnalysisResult {
+  overallScore: number
+  photoScore: number
+  bioScore: number
+  promptsScore: number
+  suggestions: ProfileSuggestion[]
+}
+
+/** Individual suggestion in profile analysis */
+export interface ProfileSuggestion {
+  area: 'photo' | 'bio' | 'prompts' | 'interests' | 'general'
+  priority: 'high' | 'medium' | 'low'
+  suggestion: string
+}
+
+/** Messaging coach response — returned by POST /ai/messaging-coach */
+export interface MessagingCoachResponse {
+  suggestions: string[]
+  context: string
+}
+
+/** AI feature rate limits */
+export const AI_RATE_LIMITS = {
+  PROFILE_ANALYSIS_PER_DAY: 3,
+  MESSAGING_COACH_PER_DAY: 50,
+  MESSAGING_COACH_DEBOUNCE_MS: 800,
+} as const

@@ -13,6 +13,7 @@ import { messages, matches, users } from '../../database/schema'
 import type { Message } from '../../database/schema'
 import type { MatchingService } from '../matching/matching.service'
 import type { TranslateService } from '../translate/translate.service'
+import type { ModerationService } from '../moderation/moderation.service'
 import type { SendMessageInput } from './dto'
 
 const DEFAULT_PAGE_SIZE = 50
@@ -37,6 +38,7 @@ export class MessagingService {
     @Inject(DATABASE) private readonly db: Database,
     private readonly matchingService: MatchingService,
     private readonly translateService: TranslateService,
+    private readonly moderationService: ModerationService,
   ) {}
 
   /**
@@ -105,6 +107,17 @@ export class MessagingService {
       // Rate-limit GIF messages: 10 per minute per user
       if (data.type === 'gif') {
         this.enforceGifRateLimit(senderId)
+      }
+
+      // AI toxicity check for text messages (fail-open: AI failure won't block messaging)
+      if (data.type === 'text' && data.content) {
+        const toxicity = await this.moderationService.checkToxicity(data.content)
+        if (toxicity.isToxic) {
+          throw new HttpException(
+            'Message blocked: content violates community guidelines',
+            HttpStatus.FORBIDDEN,
+          )
+        }
       }
 
       const [message] = await this.db.transaction(async (tx) => {

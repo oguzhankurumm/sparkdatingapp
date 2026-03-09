@@ -6,11 +6,13 @@ import { MessagingService } from './messaging.service'
 import { MessagingGateway } from './messaging.gateway'
 import { MatchingModule } from '../matching/matching.module'
 import { TranslateModule } from '../translate/translate.module'
+import { ModerationModule } from '../moderation/moderation.module'
 
 @Module({
   imports: [
     MatchingModule,
     TranslateModule,
+    ModerationModule,
     JwtModule.registerAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({

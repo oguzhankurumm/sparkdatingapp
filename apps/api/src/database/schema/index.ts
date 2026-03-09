@@ -32,6 +32,7 @@ export * from './subscriptions'
 
 // AI Features
 export * from './dating-helper-logs'
+export * from './ai-logs'
 
 // Referrals
 export * from './referrals'

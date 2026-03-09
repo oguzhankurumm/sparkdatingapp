@@ -36,6 +36,11 @@ export type {
   SendGiftResponse,
   GiftHistoryItem,
   GiftHistoryResponse,
+  ToxicityCheckResult,
+  PhotoModerationResult,
+  ProfileAnalysisResult,
+  ProfileSuggestion,
+  MessagingCoachResponse,
 } from './business'
 export {
   FREE_MALE_FEATURES,
@@ -49,6 +54,7 @@ export {
   TOKEN_ECONOMY,
   CALL_RATE,
   COIN_PACKAGES,
+  AI_RATE_LIMITS,
 } from './business'
 
 export type { ZodiacSign, ZodiacElement, ZodiacInfo, ZodiacCompatibility } from './zodiac'
