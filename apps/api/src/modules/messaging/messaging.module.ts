@@ -5,10 +5,12 @@ import { MessagingController } from './messaging.controller'
 import { MessagingService } from './messaging.service'
 import { MessagingGateway } from './messaging.gateway'
 import { MatchingModule } from '../matching/matching.module'
+import { TranslateModule } from '../translate/translate.module'
 
 @Module({
   imports: [
     MatchingModule,
+    TranslateModule,
     JwtModule.registerAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({

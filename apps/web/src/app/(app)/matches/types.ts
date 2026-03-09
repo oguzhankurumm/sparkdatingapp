@@ -34,7 +34,19 @@ export interface MatchDetail {
   compatibilityScore: number | null
 }
 
-export type MessageType = 'text' | 'image' | 'gift' | 'voice' | 'system'
+export type MessageType = 'text' | 'image' | 'gif' | 'gift' | 'voice' | 'system'
+
+export interface GifMetadata {
+  giphyId: string
+  giphyUrl: string
+  giphyPreview: string
+  width: number
+  height: number
+}
+
+export interface MessageMetadata {
+  gif?: GifMetadata
+}
 
 export interface Message {
   id: string
@@ -42,6 +54,10 @@ export interface Message {
   senderId: string
   type: MessageType
   content: string
+  translatedContent?: string | null
+  originalLanguage?: string | null
+  mediaUrl?: string | null
+  metadata?: MessageMetadata | null
   createdAt: string
   readAt: string | null
 }
@@ -54,6 +70,7 @@ export interface MessagesResponse {
 export interface SendMessagePayload {
   type: MessageType
   content: string
+  metadata?: MessageMetadata
 }
 
 // Socket event types

@@ -19,6 +19,20 @@ export const relationshipGoalEnum = pgEnum('relationship_goal', [
   'unsure',
 ])
 export const showMeEnum = pgEnum('show_me', ['men', 'women', 'everyone'])
+export const zodiacSignEnum = pgEnum('zodiac_sign', [
+  'aries',
+  'taurus',
+  'gemini',
+  'cancer',
+  'leo',
+  'virgo',
+  'libra',
+  'scorpio',
+  'sagittarius',
+  'capricorn',
+  'aquarius',
+  'pisces',
+])
 
 export const users = pgTable('users', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -29,6 +43,7 @@ export const users = pgTable('users', {
   // Profile
   firstName: varchar('first_name', { length: 100 }).notNull(),
   birthday: date('birthday').notNull(),
+  zodiacSign: zodiacSignEnum('zodiac_sign'),
   gender: genderEnum('gender').notNull(),
   showGender: boolean('show_gender').default(true).notNull(),
   bio: text('bio'),
@@ -52,6 +67,10 @@ export const users = pgTable('users', {
 
   // Interests (stored as JSON array of string IDs)
   interests: text('interests').array(),
+
+  // AI & Translation
+  preferredLanguage: varchar('preferred_language', { length: 10 }).default('en').notNull(),
+  autoTranslate: boolean('auto_translate').default(false).notNull(),
 
   // Gamification
   currentStreak: integer('current_streak').default(0).notNull(),

@@ -39,6 +39,12 @@ interface PublicProfile {
   isReadyForCall: boolean
   callTokenRate: number // tokens per minute
   topGifts: { emoji: string; name: string; count: number }[]
+  zodiacCompatibility: {
+    score: number
+    label: string
+    emoji: string
+    description: string
+  } | null
   compatibilityScore: number | null // 0-100, only for Platinum
   distance: number | null // km
 }
@@ -224,6 +230,23 @@ export default function UserProfilePage({ params }: { params: Promise<{ userId: 
             </span>{' '}
             · No refunds
           </p>
+        </div>
+      )}
+
+      {/* ─── Zodiac Compatibility ─── */}
+      {profile.zodiacCompatibility && (
+        <div className="border-secondary/20 from-secondary/5 to-primary/5 dark:from-secondary/10 dark:to-primary/10 mx-4 mb-4 overflow-hidden rounded-2xl border bg-gradient-to-r p-4">
+          <div className="flex items-center gap-3">
+            <div className="bg-secondary/10 text-secondary flex h-12 w-12 items-center justify-center rounded-full text-2xl font-bold">
+              {profile.zodiacCompatibility.score}%
+            </div>
+            <div className="flex-1">
+              <p className="text-secondary text-sm font-semibold">
+                {profile.zodiacCompatibility.emoji} {profile.zodiacCompatibility.label}
+              </p>
+              <p className="text-text-muted text-xs">{profile.zodiacCompatibility.description}</p>
+            </div>
+          </div>
         </div>
       )}
 

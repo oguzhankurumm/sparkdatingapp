@@ -27,3 +27,6 @@ export type { BottomSheetProps } from './bottom-sheet'
 
 export { NotificationPanel } from './notification-panel'
 export type { NotificationPanelProps, NotificationItem } from './notification-panel'
+
+export { PanicButton } from './panic-button'
+export type { PanicButtonProps } from './panic-button'

@@ -1,7 +1,7 @@
 'use client'
 
-import { forwardRef, useState } from 'react'
-import { PaperPlaneRight, Image, Microphone, Gift, Lightbulb } from '@phosphor-icons/react'
+import { forwardRef, useEffect, useState } from 'react'
+import { PaperPlaneRight, Image, Microphone, Gift, Lightbulb, Gif } from '@phosphor-icons/react'
 import { cn } from '../utils/cn'
 
 interface ChatInputProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -9,10 +9,13 @@ interface ChatInputProps extends React.HTMLAttributes<HTMLDivElement> {
   onImageClick?: () => void
   onVoiceClick?: () => void
   onGiftClick?: () => void
+  onGifClick?: () => void
   onHelperClick?: () => void
   placeholder?: string
   disabled?: boolean
   showHelper?: boolean
+  /** When set, fills the textarea with this value (one-shot) */
+  prefillValue?: string
 }
 
 const ChatInput = forwardRef<HTMLDivElement, ChatInputProps>(
@@ -23,15 +26,22 @@ const ChatInput = forwardRef<HTMLDivElement, ChatInputProps>(
       onImageClick,
       onVoiceClick,
       onGiftClick,
+      onGifClick,
       onHelperClick,
       placeholder = 'Type a message...',
       disabled,
       showHelper = false,
+      prefillValue,
       ...props
     },
     ref,
   ) => {
     const [message, setMessage] = useState('')
+
+    // Sync prefillValue into internal state when it changes
+    useEffect(() => {
+      if (prefillValue) setMessage(prefillValue)
+    }, [prefillValue])
 
     const handleSend = () => {
       const trimmed = message.trim()
@@ -74,6 +84,14 @@ const ChatInput = forwardRef<HTMLDivElement, ChatInputProps>(
               disabled={disabled}
             >
               <Gift size={20} />
+            </button>
+            <button
+              type="button"
+              onClick={onGifClick}
+              className="text-text-muted hover:bg-surface hover:text-text-secondary rounded-full p-1.5 transition-colors"
+              disabled={disabled}
+            >
+              <Gif size={20} />
             </button>
             {showHelper ? (
               <button

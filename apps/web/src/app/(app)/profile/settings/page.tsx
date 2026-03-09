@@ -2,10 +2,11 @@
 
 import { useCallback, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Avatar, Badge, Button, Input, Slider, Toggle, Skeleton } from '@spark/ui'
+import { Avatar, Badge, Button, Input, PanicButton, Slider, Toggle, Skeleton } from '@spark/ui'
 import {
   User,
   Shield,
+  ShieldWarning,
   Bell,
   Phone,
   Robot,
@@ -24,6 +25,8 @@ import {
 import { useCurrentUser, useLogout } from '@/lib/hooks/use-auth'
 import { api } from '@/lib/api-client'
 import { ThemeToggleConnected } from '@/components/theme-toggle-connected'
+import { useSafetyStatus, useTriggerPanic } from '../hooks/use-safety'
+import { SafetyCheckModal } from '../components/safety-check-modal'
 
 // ──────────────────────────────────────────────
 // Settings Page
@@ -34,6 +37,9 @@ export default function SettingsPage() {
   const logoutMutation = useLogout()
   const router = useRouter()
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+  const [safetyModalOpen, setSafetyModalOpen] = useState(false)
+  const { data: safetyStatus } = useSafetyStatus()
+  const triggerPanic = useTriggerPanic()
 
   const handleLogout = useCallback(async () => {
     await logoutMutation.mutateAsync()
@@ -93,6 +99,56 @@ export default function SettingsPage() {
           <SettingsRow label="Location Sharing" sublabel="Approximate only" href="#" />
           <SettingsRow label="Read Receipts" sublabel="On" href="#" />
           <SettingsRow label="Blocked Users" href="/profile/settings/blocked" />
+        </div>
+      </SettingsSection>
+
+      {/* ─── Safety ─── */}
+      <SettingsSection title="Safety" icon={ShieldWarning}>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between px-1">
+            <div className="min-w-0 flex-1">
+              <p className="text-text-primary text-sm font-medium">Emergency Panic</p>
+              <p className="text-text-muted text-xs">
+                {safetyStatus?.active
+                  ? 'Panic mode active — profile hidden'
+                  : 'Hold 3 seconds for emergency mode'}
+              </p>
+            </div>
+            <PanicButton
+              size="sm"
+              isActive={safetyStatus?.active ?? false}
+              onTrigger={async () => {
+                // Try to grab geolocation
+                let latitude: string | undefined
+                let longitude: string | undefined
+                try {
+                  const pos = await new Promise<GeolocationPosition>((resolve, reject) =>
+                    navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 3000 }),
+                  )
+                  latitude = String(pos.coords.latitude)
+                  longitude = String(pos.coords.longitude)
+                } catch {
+                  // Location unavailable — that's OK
+                }
+                await triggerPanic.mutateAsync({ latitude, longitude })
+                setSafetyModalOpen(true)
+              }}
+            />
+          </div>
+
+          {safetyStatus?.active && (
+            <>
+              <div className="border-border-subtle border-t" />
+              <Button
+                variant="secondary"
+                size="md"
+                className="w-full"
+                onClick={() => setSafetyModalOpen(true)}
+              >
+                Check Safety Status
+              </Button>
+            </>
+          )}
         </div>
       </SettingsSection>
 
@@ -245,6 +301,12 @@ export default function SettingsPage() {
       </div>
 
       {deleteModalOpen && <DeleteAccountModal onClose={() => setDeleteModalOpen(false)} />}
+
+      <SafetyCheckModal
+        open={safetyModalOpen}
+        onClose={() => setSafetyModalOpen(false)}
+        autoResetAt={safetyStatus?.event?.autoResetAt}
+      />
     </div>
   )
 }

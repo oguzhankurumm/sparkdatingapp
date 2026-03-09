@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, timestamp, boolean, pgEnum, index } from 'drizzle-orm/pg-core'
+import { pgTable, uuid, text, timestamp, boolean, pgEnum, index, jsonb } from 'drizzle-orm/pg-core'
 import { users } from './users'
 import { matches } from './matches'
 
@@ -24,6 +24,7 @@ export const messages = pgTable(
     type: messageTypeEnum('type').default('text').notNull(),
     content: text('content'),
     mediaUrl: text('media_url'),
+    metadata: jsonb('metadata').$type<Record<string, unknown>>(),
 
     // Translation
     translatedContent: text('translated_content'),

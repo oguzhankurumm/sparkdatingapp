@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { Avatar, Skeleton } from '@spark/ui'
 import { CaretRight } from '@phosphor-icons/react'
 import { useReadyToCall } from '../hooks'
@@ -12,13 +13,10 @@ export function ReadyToCallRow() {
       {/* Section header */}
       <div className="flex items-center justify-between px-4">
         <h2 className="font-heading text-text-primary text-lg font-bold">Ready to Chat</h2>
-        <button
-          type="button"
-          className="text-primary flex items-center gap-0.5 text-sm font-medium"
-        >
+        <Link href="/calls" className="text-primary flex items-center gap-0.5 text-sm font-medium">
           See all
           <CaretRight size={14} weight="bold" />
-        </button>
+        </Link>
       </div>
 
       {/* Horizontal scroll */}

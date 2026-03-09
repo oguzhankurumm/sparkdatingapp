@@ -1,1 +1,1 @@
-export { sendMessageSchema, type SendMessageInput } from './send-message.dto'
+export { sendMessageSchema, type SendMessageInput, type GifMetadata } from './send-message.dto'

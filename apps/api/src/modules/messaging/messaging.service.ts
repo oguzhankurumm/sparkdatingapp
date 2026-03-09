@@ -2,9 +2,10 @@ import { Inject, Injectable, Logger, ForbiddenException } from '@nestjs/common'
 import { and, eq, desc, lt, sql } from 'drizzle-orm'
 import * as Sentry from '@sentry/node'
 import { DATABASE, type Database } from '../../database/database.module'
-import { messages, matches } from '../../database/schema'
+import { messages, matches, users } from '../../database/schema'
 import type { Message } from '../../database/schema'
 import type { MatchingService } from '../matching/matching.service'
+import type { TranslateService } from '../translate/translate.service'
 import type { SendMessageInput } from './dto'
 
 const DEFAULT_PAGE_SIZE = 50
@@ -23,6 +24,7 @@ export class MessagingService {
   constructor(
     @Inject(DATABASE) private readonly db: Database,
     private readonly matchingService: MatchingService,
+    private readonly translateService: TranslateService,
   ) {}
 
   /**
@@ -98,6 +100,7 @@ export class MessagingService {
             type: data.type,
             content: data.content ?? null,
             mediaUrl: data.mediaUrl ?? null,
+            metadata: data.metadata ?? null,
           })
           .returning()
 
@@ -125,6 +128,12 @@ export class MessagingService {
       }
 
       this.logger.log(`Message sent in match ${matchId} by user ${senderId}`)
+
+      // Auto-translate for text messages (fire after transaction)
+      if (message.type === 'text' && message.content) {
+        const translated = await this.autoTranslateMessage(message, matchId, senderId)
+        if (translated) return translated
+      }
 
       return message
     } catch (error) {
@@ -176,6 +185,73 @@ export class MessagingService {
       Sentry.captureException(error)
       this.logger.error('Failed to mark messages as read', error)
       throw error
+    }
+  }
+
+  /**
+   * Auto-translate a message if the receiver has autoTranslate enabled
+   * and the message language differs from their preferred language.
+   * Returns the updated message or null if no translation was needed.
+   */
+  private async autoTranslateMessage(
+    message: Message,
+    matchId: string,
+    senderId: string,
+  ): Promise<Message | null> {
+    try {
+      // Find the match to determine the receiver
+      const [match] = await this.db.select().from(matches).where(eq(matches.id, matchId)).limit(1)
+
+      if (!match) return null
+
+      const receiverId = match.user1Id === senderId ? match.user2Id : match.user1Id
+
+      // Check receiver's translation preferences
+      const [receiver] = await this.db
+        .select({
+          autoTranslate: users.autoTranslate,
+          preferredLanguage: users.preferredLanguage,
+        })
+        .from(users)
+        .where(eq(users.id, receiverId))
+        .limit(1)
+
+      if (!receiver?.autoTranslate || !receiver.preferredLanguage) return null
+
+      // Detect the source language
+      const detected = await this.translateService.detectLanguage(message.content!)
+
+      // Skip if same language or unsupported
+      if (
+        this.translateService.isSameLanguage(detected.language, receiver.preferredLanguage) ||
+        !this.translateService.isSupported(detected.language)
+      ) {
+        return null
+      }
+
+      // Translate to receiver's preferred language
+      const result = await this.translateService.translate(
+        message.content!,
+        receiver.preferredLanguage,
+        detected.language,
+      )
+
+      // Update the message with translation data
+      const [updated] = await this.db
+        .update(messages)
+        .set({
+          translatedContent: result.translatedText,
+          originalLanguage: detected.language,
+        })
+        .where(eq(messages.id, message.id))
+        .returning()
+
+      return updated ?? message
+    } catch (error) {
+      // Translation failure should not block message delivery
+      this.logger.warn('Auto-translate failed, message sent without translation', error)
+      Sentry.captureException(error)
+      return null
     }
   }
 

@@ -16,6 +16,7 @@ import { ReadyToCallRow } from './components/ready-to-call-row'
 import { TrendingGrid } from './components/trending-grid'
 import { NearbyTablesRow } from './components/nearby-tables-row'
 import { NearbySection } from './components/nearby-section'
+import { LikesReceivedRow } from './components/likes-received-row'
 
 // ── Types ──────────────────────────────────────────────
 
@@ -406,6 +407,7 @@ function SwipeableCard({
           photo={profile.user.avatarUrl}
           matchPercent={profile.score}
           zodiac={profile.user.zodiac}
+          zodiacCompat={profile.user.zodiacCompat}
           distance={profile.user.distance}
           verified={profile.user.isVerified}
           stamp={null}
@@ -450,16 +452,19 @@ function BrowseSection() {
         }}
       />
 
-      {/* Section 1: Ready to Chat */}
+      {/* Section 1: People Who Like You (blurred for free tier) */}
+      <LikesReceivedRow />
+
+      {/* Section 2: Ready to Chat */}
       <ReadyToCallRow />
 
-      {/* Section 2: Trending This Week */}
+      {/* Section 3: Trending This Week */}
       <TrendingGrid />
 
-      {/* Section 3: Nearby Tables */}
+      {/* Section 4: Nearby Tables */}
       <NearbyTablesRow />
 
-      {/* Section 4: People Nearby */}
+      {/* Section 5: People Nearby */}
       <NearbySection />
     </div>
   )

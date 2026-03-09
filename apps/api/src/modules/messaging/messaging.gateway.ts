@@ -151,7 +151,13 @@ export class MessagingGateway implements OnGatewayConnection, OnGatewayDisconnec
   async handleSendMessage(
     @ConnectedSocket() client: AuthenticatedSocket,
     @MessageBody()
-    data: { matchId: string; type?: string; content?: string; mediaUrl?: string },
+    data: {
+      matchId: string
+      type?: string
+      content?: string
+      mediaUrl?: string
+      metadata?: Record<string, unknown>
+    },
   ): Promise<{ event: string; data: { success: boolean; error?: string } }> {
     try {
       const userId = client.data.userId
@@ -161,6 +167,7 @@ export class MessagingGateway implements OnGatewayConnection, OnGatewayDisconnec
         type: data.type ?? 'text',
         content: data.content,
         mediaUrl: data.mediaUrl,
+        metadata: data.metadata,
       })
 
       if (!parsed.success) {

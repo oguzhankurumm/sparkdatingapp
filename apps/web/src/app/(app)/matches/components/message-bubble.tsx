@@ -1,8 +1,9 @@
 'use client'
 
+import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { MessageBubble as UIMessageBubble } from '@spark/ui'
-import { Check, Checks } from '@phosphor-icons/react'
+import { Check, Checks, Translate } from '@phosphor-icons/react'
 import type { Message } from '../types'
 import { formatMessageTime } from '../utils'
 
@@ -12,6 +13,13 @@ interface ChatMessageBubbleProps {
 }
 
 export function ChatMessageBubble({ message, isOwn }: ChatMessageBubbleProps) {
+  const isGif = message.type === 'gif' && message.metadata?.gif
+  const hasTranslation = !!message.translatedContent
+  const [showOriginal, setShowOriginal] = useState(false)
+
+  const displayContent =
+    hasTranslation && !showOriginal ? message.translatedContent! : message.content
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
@@ -20,11 +28,37 @@ export function ChatMessageBubble({ message, isOwn }: ChatMessageBubbleProps) {
       className={isOwn ? 'flex justify-end' : 'flex justify-start'}
     >
       <div className="max-w-[75%]">
-        <UIMessageBubble
-          variant={isOwn ? 'sent' : 'received'}
-          message={message.content}
-          timestamp={formatMessageTime(message.createdAt)}
-        />
+        {isGif ? (
+          <div className="overflow-hidden rounded-2xl">
+            <img
+              src={message.metadata!.gif!.giphyUrl}
+              alt="GIF"
+              className="max-h-[200px] w-auto rounded-2xl object-contain"
+              loading="lazy"
+            />
+            <div className="text-text-muted mt-0.5 text-right text-[10px]">
+              {formatMessageTime(message.createdAt)}
+            </div>
+          </div>
+        ) : (
+          <>
+            <UIMessageBubble
+              variant={isOwn ? 'sent' : 'received'}
+              message={displayContent}
+              timestamp={formatMessageTime(message.createdAt)}
+            />
+            {hasTranslation && (
+              <button
+                type="button"
+                onClick={() => setShowOriginal((v) => !v)}
+                className="text-text-muted hover:text-text-secondary mt-0.5 flex items-center gap-1 text-[10px] transition-colors"
+              >
+                <Translate size={10} weight="bold" />
+                {showOriginal ? 'Show translation' : 'See original'}
+              </button>
+            )}
+          </>
+        )}
         {isOwn && (
           <div className="mt-0.5 flex justify-end pr-1">
             {message.readAt ? (

@@ -107,6 +107,42 @@ export function useMarkAsRead(matchId: string) {
 }
 
 /**
+ * Translate a single message on demand (for messages without auto-translate).
+ */
+export function useTranslateMessage(matchId: string) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (payload: { messageId: string; targetLang: string }) =>
+      api.post<{ translatedText: string; detectedSourceLang: string }>(`/translate`, {
+        text: '',
+        targetLang: payload.targetLang,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: matchKeys.messages(matchId),
+      })
+    },
+  })
+}
+
+/**
+ * Get AI-powered message suggestions (Platinum only).
+ */
+export function useDatingHelper(matchId: string) {
+  return useMutation({
+    mutationFn: (payload: {
+      recentMessages: { role: 'user' | 'partner'; content: string }[]
+      tone?: 'casual' | 'flirty' | 'deep' | 'funny'
+    }) =>
+      api.post<{ suggestions: string[]; tone: string }>('/dating-helper/suggestions', {
+        matchId,
+        ...payload,
+      }),
+  })
+}
+
+/**
  * Unmatch a user — removes the match entirely.
  */
 export function useUnmatch(matchId: string) {

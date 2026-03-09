@@ -13,6 +13,7 @@
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
     "@phosphor-icons/react": "^2.1.7",
+    "@sentry/nextjs": "^10.42.0",
     "@spark/hooks": "workspace:*",
     "@spark/i18n": "workspace:*",
     "@spark/types": "workspace:*",
@@ -35,6 +36,7 @@
     "@spark/eslint-config": "workspace:*",
     "@spark/prettier-config": "workspace:*",
     "@spark/tsconfig": "workspace:*",
+    "@t3-oss/env-nextjs": "^0.13.10",
     "@tailwindcss/postcss": "^4.0.6",
     "@types/node": "^22.12.0",
     "@types/react": "^19.0.8",

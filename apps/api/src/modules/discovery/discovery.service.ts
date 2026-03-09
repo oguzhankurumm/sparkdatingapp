@@ -2,7 +2,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common'
 import { and, eq, isNull, notInArray, gte, desc, sql, count } from 'drizzle-orm'
 import * as Sentry from '@sentry/node'
 import { DATABASE, type Database } from '../../database/database.module'
-import { users, likes, blocks } from '../../database/schema'
+import { users, likes, blocks, tables, tableGuests, venues } from '../../database/schema'
 import type { PlanFeaturesService } from '../subscriptions/plan-features.service'
 import type { DiscoveryScoringService } from './discovery-scoring.service'
 import { type ScoredProfile } from './discovery-scoring.service'
@@ -34,6 +34,32 @@ export interface NearbyUser {
   latitude: string | null
   longitude: string | null
   lastActiveDate: Date | null
+}
+
+export interface LikeReceivedProfile {
+  id: string
+  firstName: string
+  age: number
+  avatarUrl: string | null
+  city: string | null
+  isVerified: boolean
+  likedAt: Date
+  /** Whether photos should be blurred (free-tier users can't see who liked them) */
+  blurred: boolean
+}
+
+export interface NearbyTableItem {
+  id: string
+  title: string
+  description: string | null
+  scheduledAt: Date
+  maxGuests: number
+  guestCount: number
+  spotsRemaining: number
+  isVip: boolean
+  hostFirstName: string
+  hostAvatarUrl: string | null
+  imageUrl: string | null
 }
 
 @Injectable()
@@ -267,6 +293,160 @@ export class DiscoveryService {
     } catch (error) {
       Sentry.captureException(error)
       this.logger.error('Failed to get ready-to-call users', error)
+      throw error
+    }
+  }
+
+  /**
+   * Get active tables near the viewer with guest count and spots remaining.
+   * Joins tables → users (host) → venues (image) → tableGuests (count).
+   */
+  async getNearbyTables(viewer: User, limit = 10): Promise<{ tables: NearbyTableItem[] }> {
+    try {
+      if (!viewer.latitude || !viewer.longitude) {
+        return { tables: [] }
+      }
+
+      const viewerLat = parseFloat(viewer.latitude)
+      const viewerLng = parseFloat(viewer.longitude)
+      const maxDistanceKm = viewer.maxDistanceKm
+
+      const latDelta = maxDistanceKm / 111.0
+      const lngDelta = maxDistanceKm / (111.0 * Math.cos((viewerLat * Math.PI) / 180))
+
+      const minLat = viewerLat - latDelta
+      const maxLat = viewerLat + latDelta
+      const minLng = viewerLng - lngDelta
+      const maxLng = viewerLng + lngDelta
+
+      const haversineDistance = sql<number>`
+        6371 * acos(
+          LEAST(1.0, cos(radians(${viewerLat}))
+          * cos(radians(CAST(${tables.latitude} AS double precision)))
+          * cos(radians(CAST(${tables.longitude} AS double precision)) - radians(${viewerLng}))
+          + sin(radians(${viewerLat}))
+          * sin(radians(CAST(${tables.latitude} AS double precision))))
+        )
+      `
+
+      // Subquery for accepted guest count
+      const guestCountSq = sql<number>`(
+        SELECT COUNT(*)::int FROM ${tableGuests}
+        WHERE ${tableGuests.tableId} = ${tables.id}
+          AND ${tableGuests.status} = 'accepted'
+      )`
+
+      const rows = await this.db
+        .select({
+          id: tables.id,
+          title: tables.title,
+          description: tables.description,
+          scheduledAt: tables.scheduledAt,
+          maxGuests: tables.maxGuests,
+          isVip: tables.isVip,
+          hostFirstName: users.firstName,
+          hostAvatarUrl: users.avatarUrl,
+          imageUrl: venues.imageUrl,
+          guestCount: guestCountSq,
+        })
+        .from(tables)
+        .innerJoin(users, eq(tables.hostId, users.id))
+        .leftJoin(venues, eq(tables.venueId, venues.id))
+        .where(
+          and(
+            eq(tables.status, 'active'),
+            sql`${tables.latitude} IS NOT NULL`,
+            sql`${tables.longitude} IS NOT NULL`,
+            sql`CAST(${tables.latitude} AS double precision) BETWEEN ${minLat} AND ${maxLat}`,
+            sql`CAST(${tables.longitude} AS double precision) BETWEEN ${minLng} AND ${maxLng}`,
+            sql`${haversineDistance} <= ${maxDistanceKm}`,
+          ),
+        )
+        .orderBy(haversineDistance)
+        .limit(limit)
+
+      const result: NearbyTableItem[] = rows.map((row) => ({
+        id: row.id,
+        title: row.title,
+        description: row.description,
+        scheduledAt: row.scheduledAt,
+        maxGuests: row.maxGuests,
+        guestCount: Number(row.guestCount) || 0,
+        spotsRemaining: Math.max(0, row.maxGuests - (Number(row.guestCount) || 0)),
+        isVip: row.isVip,
+        hostFirstName: row.hostFirstName,
+        hostAvatarUrl: row.hostAvatarUrl,
+        imageUrl: row.imageUrl,
+      }))
+
+      return { tables: result }
+    } catch (error) {
+      Sentry.captureException(error)
+      this.logger.error('Failed to get nearby tables', error)
+      throw error
+    }
+  }
+
+  /**
+   * Get profiles who liked the viewer.
+   * Free-tier users see blurred photos; Premium/Platinum see clear photos.
+   */
+  async getLikesReceived(
+    viewer: User,
+    limit = 20,
+  ): Promise<{ profiles: LikeReceivedProfile[]; total: number }> {
+    try {
+      const features = await this.planFeatures.getEffectiveFeatures(viewer.id, viewer.gender)
+      const canSeeLikers = features.canSeeWhoLiked ?? false
+
+      const [rows, totalResult] = await Promise.all([
+        this.db
+          .select({
+            id: users.id,
+            firstName: users.firstName,
+            birthday: users.birthday,
+            avatarUrl: users.avatarUrl,
+            city: users.city,
+            isVerified: users.isVerified,
+            likedAt: likes.createdAt,
+          })
+          .from(likes)
+          .innerJoin(users, eq(likes.senderId, users.id))
+          .where(
+            and(
+              eq(likes.receiverId, viewer.id),
+              eq(likes.type, 'like'),
+              isNull(users.deletedAt),
+              eq(users.isBanned, false),
+            ),
+          )
+          .orderBy(desc(likes.createdAt))
+          .limit(limit),
+
+        this.db
+          .select({ count: count() })
+          .from(likes)
+          .where(and(eq(likes.receiverId, viewer.id), eq(likes.type, 'like'))),
+      ])
+
+      const now = new Date()
+      const profiles: LikeReceivedProfile[] = rows.map((row) => ({
+        id: row.id,
+        firstName: canSeeLikers ? row.firstName : '???',
+        age: Math.floor(
+          (now.getTime() - new Date(row.birthday).getTime()) / (365.25 * 24 * 60 * 60 * 1000),
+        ),
+        avatarUrl: row.avatarUrl,
+        city: canSeeLikers ? row.city : null,
+        isVerified: row.isVerified,
+        likedAt: row.likedAt,
+        blurred: !canSeeLikers,
+      }))
+
+      return { profiles, total: Number(totalResult[0]?.count ?? 0) }
+    } catch (error) {
+      Sentry.captureException(error)
+      this.logger.error('Failed to get likes received', error)
       throw error
     }
   }

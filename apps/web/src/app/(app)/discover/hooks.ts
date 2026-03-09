@@ -11,6 +11,7 @@ export interface DiscoverProfile {
     avatarUrl: string
     city?: string
     zodiac?: string
+    zodiacCompat?: number
     distance?: string
     isVerified?: boolean
     bio?: string
@@ -61,6 +62,40 @@ export interface NearbyResponse {
   users: NearbyUser[]
 }
 
+export interface NearbyTable {
+  id: string
+  title: string
+  description: string | null
+  scheduledAt: string
+  maxGuests: number
+  guestCount: number
+  spotsRemaining: number
+  isVip: boolean
+  hostFirstName: string
+  hostAvatarUrl: string | null
+  imageUrl: string | null
+}
+
+export interface NearbyTablesResponse {
+  tables: NearbyTable[]
+}
+
+export interface LikeReceivedProfile {
+  id: string
+  firstName: string
+  age: number
+  avatarUrl: string
+  city?: string
+  isVerified: boolean
+  likedAt: string
+  blurred: boolean
+}
+
+export interface LikesReceivedResponse {
+  profiles: LikeReceivedProfile[]
+  total: number
+}
+
 export interface LikePayload {
   receiverId: string
   type: 'like' | 'pass' | 'super_like'
@@ -93,6 +128,20 @@ export function useNearbyUsers() {
   return useQuery<NearbyResponse>({
     queryKey: ['discover', 'nearby'],
     queryFn: () => api.get<NearbyResponse>('/discovery/nearby'),
+  })
+}
+
+export function useNearbyTables() {
+  return useQuery<NearbyTablesResponse>({
+    queryKey: ['discover', 'nearby-tables'],
+    queryFn: () => api.get<NearbyTablesResponse>('/discovery/nearby-tables'),
+  })
+}
+
+export function useLikesReceived() {
+  return useQuery<LikesReceivedResponse>({
+    queryKey: ['discover', 'likes-received'],
+    queryFn: () => api.get<LikesReceivedResponse>('/discovery/likes-received'),
   })
 }
 

@@ -1,0 +1,25 @@
+{
+  "name": "Spark — Dating Reimagined",
+  "short_name": "Spark",
+  "description": "Meet, match, video call, and go live. Spark combines the best of modern dating with real-time connection.",
+  "start_url": "/discover",
+  "display": "standalone",
+  "background_color": "#FAFAF9",
+  "theme_color": "#E11D48",
+  "orientation": "portrait",
+  "categories": ["social", "lifestyle"],
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

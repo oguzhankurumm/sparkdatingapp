@@ -38,9 +38,21 @@ export class DiscoveryController {
     return this.discoveryService.getReadyToCall(user)
   }
 
+  /** GET /api/discovery/likes-received — who liked you (blurred for free tier) */
+  @Get('likes-received')
+  async getLikesReceived(@CurrentUser() user: User, @Query('limit') limit?: string) {
+    return this.discoveryService.getLikesReceived(user, limit ? parseInt(limit, 10) : undefined)
+  }
+
   /** GET /api/discovery/nearby — users near the viewer for map view */
   @Get('nearby')
   async getNearbyUsers(@CurrentUser() user: User) {
     return this.discoveryService.getNearbyUsers(user)
+  }
+
+  /** GET /api/discovery/nearby-tables — active tables near the viewer */
+  @Get('nearby-tables')
+  async getNearbyTables(@CurrentUser() user: User) {
+    return this.discoveryService.getNearbyTables(user)
   }
 }

@@ -1,11 +1,12 @@
 import type { ReactNode } from 'react'
-import { LegalFooter } from '@/components/legal-footer'
+import { Navbar, Footer } from './components'
 
 export default function MarketingLayout({ children }: { children: ReactNode }) {
   return (
     <>
+      <Navbar />
       {children}
-      <LegalFooter />
+      <Footer />
     </>
   )
 }

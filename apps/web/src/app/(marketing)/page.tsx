@@ -1,8 +1,38 @@
+import type { Metadata } from 'next'
+import {
+  HeroSection,
+  HowItWorks,
+  FeaturesSection,
+  Testimonials,
+  ForHerSection,
+  DownloadSection,
+  FinalCta,
+  FaqSection,
+} from './components'
+
+export const metadata: Metadata = {
+  title: 'Spark — Dating That Feels Real',
+  description:
+    'Skip the endless swiping. Spark connects you through video calls, live tables, and AI-powered compatibility. Free to start.',
+  openGraph: {
+    title: 'Spark — Dating That Feels Real',
+    description:
+      'Skip the endless swiping. Spark connects you through video calls, live tables, and AI-powered compatibility.',
+    type: 'website',
+  },
+}
+
 export default function LandingPage() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center">
-      <h1 className="font-heading text-4xl font-bold">Spark</h1>
-      <p className="font-body mt-4 text-lg text-gray-600">Dating Reimagined</p>
+    <main>
+      <HeroSection />
+      <HowItWorks />
+      <FeaturesSection />
+      <ForHerSection />
+      <Testimonials />
+      <DownloadSection />
+      <FaqSection />
+      <FinalCta />
     </main>
   )
 }

@@ -33,3 +33,6 @@ export type { ThemeToggleProps } from './theme-toggle'
 
 export { OtpInput } from './otp-input'
 export type { OtpInputProps } from './otp-input'
+
+export { BlurredImage, blurredImageVariants } from './blurred-image'
+export type { BlurredImageProps } from './blurred-image'

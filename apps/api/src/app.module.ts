@@ -32,6 +32,10 @@ import { SpeedDatingModule } from './modules/speed-dating/speed-dating.module'
 import { BadgesModule } from './modules/badges/badges.module'
 import { LeaderboardModule } from './modules/leaderboard/leaderboard.module'
 import { SafeDateModule } from './modules/safe-date/safe-date.module'
+import { SafetyModule } from './modules/safety/safety.module'
+import { AiModule } from './modules/ai/ai.module'
+import { IcebreakerModule } from './modules/icebreaker/icebreaker.module'
+import { GiphyModule } from './modules/giphy/giphy.module'
 
 @Module({
   imports: [
@@ -69,6 +73,10 @@ import { SafeDateModule } from './modules/safe-date/safe-date.module'
     BadgesModule,
     LeaderboardModule,
     SafeDateModule,
+    SafetyModule,
+    AiModule,
+    IcebreakerModule,
+    GiphyModule,
   ],
   controllers: [HealthController],
   providers: [

@@ -54,6 +54,9 @@ export * from './leaderboard'
 // M6 — Safe Date
 export * from './safe-date'
 
+// Safety — Panic Events
+export * from './panic-events'
+
 // M6 — Profile Boosts
 export * from './profile-boosts'
 

@@ -36,3 +36,6 @@ export type { CompatibilityInsightsBannerProps } from './compatibility-insights-
 
 export { NotificationRow } from './notification-row'
 export type { NotificationRowProps } from './notification-row'
+
+export { LikesReceivedCard } from './likes-received-card'
+export type { LikesReceivedCardProps } from './likes-received-card'

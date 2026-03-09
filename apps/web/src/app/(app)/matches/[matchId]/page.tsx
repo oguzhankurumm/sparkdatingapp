@@ -4,14 +4,17 @@ import { useEffect, useRef, useCallback, useState, Fragment } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft, DotsThree, Phone, WarningCircle, Trash, Flag } from '@phosphor-icons/react'
-import { Avatar, Button, Skeleton } from '@spark/ui'
+import { Avatar, Button, PanicButton, Skeleton } from '@spark/ui'
 import { useCurrentUser } from '@/lib/hooks/use-auth'
+import { useSafetyStatus, useTriggerPanic } from '../../profile/hooks/use-safety'
+import { SafetyCheckModal } from '../../profile/components/safety-check-modal'
 import { useMatch, useMessages, useSendMessage, useMarkAsRead, useUnmatch } from '../hooks'
 import { useChatSocket } from '../use-chat-socket'
-import { ChatMessageBubble, TypingIndicator, DateSeparator } from '../components'
+import { ChatMessageBubble, TypingIndicator, DateSeparator, IcebreakerBanner } from '../components'
 import { ChatInputBar } from '../components/chat-input'
+import { DatingHelper } from '../components/dating-helper'
 import { isUserOnline, groupMessagesByDate } from '../utils'
-import type { Message } from '../types'
+import type { Message, GifMetadata } from '../types'
 
 export default function ChatPage() {
   const params = useParams()
@@ -40,6 +43,11 @@ export default function ChatPage() {
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   const [showOptionsMenu, setShowOptionsMenu] = useState(false)
   const [showUnmatchConfirm, setShowUnmatchConfirm] = useState(false)
+  const [safetyModalOpen, setSafetyModalOpen] = useState(false)
+  const [inputPrefill, setInputPrefill] = useState<string | undefined>()
+
+  const { data: safetyStatus } = useSafetyStatus()
+  const triggerPanic = useTriggerPanic()
   const prevScrollHeightRef = useRef(0)
 
   // ── Flatten all messages from paginated data ──
@@ -97,6 +105,18 @@ export default function ChatPage() {
     (content: string) => {
       if (!content.trim()) return
       sendMessage.mutate({ type: 'text', content: content.trim() })
+    },
+    [sendMessage],
+  )
+
+  // ── Send GIF handler ──
+  const handleGifSend = useCallback(
+    (metadata: GifMetadata) => {
+      sendMessage.mutate({
+        type: 'gif',
+        content: '',
+        metadata: { gif: metadata },
+      })
     },
     [sendMessage],
   )
@@ -168,7 +188,26 @@ export default function ChatPage() {
           {partnerOnline && <p className="text-success text-xs">Online</p>}
         </div>
 
-        <div className="flex gap-1">
+        <div className="flex items-center gap-1">
+          <PanicButton
+            size="sm"
+            isActive={safetyStatus?.active ?? false}
+            onTrigger={async () => {
+              let lat: string | undefined
+              let lng: string | undefined
+              try {
+                const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
+                  navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 3000 })
+                })
+                lat = String(pos.coords.latitude)
+                lng = String(pos.coords.longitude)
+              } catch {
+                // Location not available — trigger anyway
+              }
+              await triggerPanic.mutateAsync({ latitude: lat, longitude: lng })
+              if (safetyStatus?.active) setSafetyModalOpen(true)
+            }}
+          />
           <button
             type="button"
             onClick={() => {
@@ -298,13 +337,16 @@ export default function ChatPage() {
           </div>
         )}
 
-        {/* Empty messages state */}
+        {/* Empty messages — icebreaker banner */}
         {allMessages.length === 0 && !isMessagesLoading && (
-          <div className="flex flex-col items-center justify-center py-12 text-center">
+          <div className="flex flex-col items-center justify-center py-8 text-center">
             <p className="text-text-muted text-sm">You matched with {partner?.firstName}!</p>
-            <p className="text-text-muted mt-1 text-sm">
+            <p className="text-text-muted mb-4 mt-1 text-sm">
               Send a message to start the conversation.
             </p>
+            <div className="w-full">
+              <IcebreakerBanner matchId={matchId} onSelect={(text) => setInputPrefill(text)} />
+            </div>
           </div>
         )}
 
@@ -331,11 +373,28 @@ export default function ChatPage() {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* ── Chat Input ── */}
-      <ChatInputBar
-        onSend={handleSend}
-        onTyping={sendTypingStart}
-        disabled={sendMessage.isPending}
+      {/* ── Chat Input + Dating Helper ── */}
+      <div className="relative">
+        <DatingHelper
+          matchId={matchId}
+          messages={allMessages}
+          currentUserId={currentUser?.id}
+          onSelectSuggestion={(text) => setInputPrefill(text)}
+        />
+        <ChatInputBar
+          onSend={handleSend}
+          onGifSend={handleGifSend}
+          onTyping={sendTypingStart}
+          disabled={sendMessage.isPending}
+          prefillValue={inputPrefill}
+        />
+      </div>
+
+      {/* ── Safety Check Modal ── */}
+      <SafetyCheckModal
+        open={safetyModalOpen}
+        onClose={() => setSafetyModalOpen(false)}
+        autoResetAt={safetyStatus?.event?.autoResetAt}
       />
     </div>
   )
