@@ -82,22 +82,34 @@ export default function SettingsPage() {
         )}
         <div className="space-y-1">
           <SettingsRow label="Edit Profile" href="/profile/edit" />
-          <SettingsRow label="Change Password" icon={Lock} href="#" />
+          <SettingsRow
+            label="Change Password"
+            icon={Lock}
+            href="/profile/settings/change-password"
+          />
           <SettingsRow
             label="Verify Account"
             sublabel={user?.isVerified ? 'Verified ✓' : 'Get the blue tick'}
-            href="#"
+            href="/profile/settings/verify-account"
           />
-          <SettingsRow label="Phone Number" sublabel="Add for 2FA" href="#" />
+          <SettingsRow label="Phone Number" sublabel="Add for 2FA" href="/profile/settings/phone" />
         </div>
       </SettingsSection>
 
       {/* ─── Privacy ─── */}
       <SettingsSection title="Privacy" icon={Shield}>
         <div className="space-y-1">
-          <SettingsRow label="Who Can Call Me" sublabel="Everyone" href="#" />
-          <SettingsRow label="Location Sharing" sublabel="Approximate only" href="#" />
-          <SettingsRow label="Read Receipts" sublabel="On" href="#" />
+          <SettingsRow
+            label="Who Can Call Me"
+            sublabel="Everyone"
+            href="/profile/settings/privacy"
+          />
+          <SettingsRow
+            label="Location Sharing"
+            sublabel="Approximate only"
+            href="/profile/settings/privacy"
+          />
+          <SettingsRow label="Read Receipts" sublabel="On" href="/profile/settings/privacy" />
           <SettingsRow label="Blocked Users" href="/profile/settings/blocked" />
         </div>
       </SettingsSection>
@@ -242,7 +254,11 @@ export default function SettingsPage() {
           </div>
           <SettingsRow label="View Plans & Upgrade" href="/profile/subscription" />
           {isPremium && (
-            <SettingsRow label="Manage Subscription" sublabel="Cancel or change plan" href="#" />
+            <SettingsRow
+              label="Manage Subscription"
+              sublabel="Cancel or change plan"
+              href="/profile/settings/manage-subscription"
+            />
           )}
         </div>
       </SettingsSection>
@@ -250,8 +266,8 @@ export default function SettingsPage() {
       {/* ─── Help & Legal ─── */}
       <SettingsSection title="Help & Legal" icon={Question}>
         <div className="space-y-1">
-          <SettingsRow label="FAQ" href="#" />
-          <SettingsRow label="Contact Support" href="#" />
+          <SettingsRow label="FAQ" href="/profile/settings/faq" />
+          <SettingsRow label="Contact Support" href="/profile/settings/support" />
           <SettingsRow label="Privacy Policy" href="/privacy" />
           <SettingsRow label="Terms of Service" href="/terms" />
           <SettingsRow label="KVKK Aydınlatma Metni" href="/kvkk" />
