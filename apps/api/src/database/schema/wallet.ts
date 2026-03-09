@@ -22,6 +22,7 @@ export const transactionTypeEnum = pgEnum('transaction_type', [
   'streak_bonus',
   'badge_reward',
   'bundle_bonus',
+  'speed_dating_join',
 ])
 
 export const withdrawalStatusEnum = pgEnum('withdrawal_status', [

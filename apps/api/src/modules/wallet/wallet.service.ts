@@ -76,7 +76,8 @@ export class WalletService {
       | 'gift_sent'
       | 'rematch_purchase'
       | 'table_create'
-      | 'table_join',
+      | 'table_join'
+      | 'speed_dating_join',
     description: string,
     referenceId?: string,
     referenceType?: string,
